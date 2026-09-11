@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Keuangan Keluarga</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+  <!-- CONFIG SCRIPT URL -->
+  <script>
+    // MASUKKAN URL WEB APP APPS SCRIPT ANDA DI SINI
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz7URippzt6-B14ni8nKef3NhP3q7IXQak8LOGngfWhaOtgaeSN3i4Co7cJG8JKcgDe2A/exec";
+  </script>
+
+  <!-- MODAL LOGIN -->
+  <div id="login-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100">
+      <div class="text-center mb-6">
+        <div class="inline-flex p-3 bg-indigo-50 text-indigo-600 rounded-2xl mb-3">
+          <i data-lucide="shield-check" class="w-8 h-8"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900">Keuangan Keluarga</h2>
+        <p class="text-xs text-slate-500 mt-1">Terhubung langsung dengan Telegram & Google Sheets</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">USERNAME</label>
+          <input type="text" id="login-user" placeholder="Contoh: maulana / mega / anak" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">PIN AKSES</label>
+          <input type="password" id="login-pin" placeholder="Masukkan PIN" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <button onclick="handleLogin()" id="btn-login" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-indigo-200 flex justify-center items-center gap-2">
+          <span>Masuk ke Akun</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APLIKASI UTAMA -->
+  <div id="main-app" class="hidden min-h-screen pb-12">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-2 bg-indigo-600 text-white rounded-xl"><i data-lucide="wallet" class="w-5 h-5"></i></div>
+          <span class="font-bold text-slate-900 text-base sm:text-lg">FamilyFin Portal</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-right">
+            <p class="text-[10px] text-slate-400 font-semibold uppercase">Pengguna Aktif</p>
+            <p id="user-display" class="text-xs sm:text-sm font-bold text-indigo-700"></p>
+          </div>
+          <button onclick="handleLogout()" class="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 transition" title="Keluar">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <!-- KPI POSISI KEUANGAN GABUNGAN -->
+      <div id="kpi-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Kas & Bank</span>
+          <h3 id="stat-total" class="text-2xl font-bold text-slate-900 mt-1">Rp 0</h3>
+          <p class="text-[11px] text-emerald-600 font-medium mt-1">Likuiditas Gabungan</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Dana Darurat (SeaBank)</span>
+          <h3 id="stat-emergency" class="text-2xl font-bold text-amber-600 mt-1">Rp 0</h3>
+          <p class="text-[11px] text-slate-500 mt-1">Target Minimum: Rp 30.000.000</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Dana Cadangan / Kas Istri</span>
+          <h3 id="stat-cadangan" class="text-2xl font-bold text-blue-600 mt-1">Rp 0</h3>
+          <p class="text-[11px] text-slate-500 mt-1">Alokasi Belanja & Operasional</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Piutang Berjalan</span>
+          <h3 id="stat-piutang" class="text-2xl font-bold text-indigo-600 mt-1">Rp 0</h3>
+          <p class="text-[11px] text-slate-500 mt-1">Hak Tagih ke Pihak Luar</p>
+        </div>
+      </div>
+
+      <!-- Action & Filter Bar -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-bold text-slate-500">Filter Anggota:</label>
+          <select id="user-filter" onchange="renderTable()" class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 font-medium">
+            <option value="ALL">Semua Data Keluarga</option>
+            <option value="Maulana Hady">Hanya Maulana</option>
+            <option value="Mega Puspita">Hanya Mega</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button onclick="openModalTrx()" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-indigo-100">
+            <i data-lucide="plus" class="w-4 h-4"></i> Catat Transaksi Baru
+          </button>
+        </div>
+      </div>
+
+      <!-- TABEL DAFTAR KEUANGAN -->
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+          <h3 class="font-bold text-slate-800 text-sm">Riwayat Transaksi Terkini</h3>
+          <button onclick="fetchDashboardData()" class="text-xs text-indigo-600 hover:underline flex items-center gap-1">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[11px] tracking-wider">
+              <tr>
+                <th class="p-3.5">Tanggal</th>
+                <th class="p-3.5">Penginput</th>
+                <th class="p-3.5">Keterangan</th>
+                <th class="p-3.5">Kategori</th>
+                <th class="p-3.5">Rekening</th>
+                <th class="p-3.5 text-right">Nominal</th>
+                <th class="p-3.5 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="trx-table-body" class="divide-y divide-slate-100 text-slate-700">
+              <tr><td colspan="7" class="p-6 text-center text-slate-400">Sedang memuat data dari spreadsheet...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL CATAT TRANSAKSI -->
+  <div id="modal-trx" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <h3 class="font-bold text-slate-900 text-base">Catat Transaksi Baru</h3>
+      <form onsubmit="submitTransaction(event)" class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-slate-600">Tanggal</label>
+            <input type="date" id="form-date" required class="w-full mt-1 p-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-600">Tipe</label>
+            <select id="form-type" class="w-full mt-1 p-2 border rounded-lg">
+              <option value="OUT">Pengeluaran (OUT)</option>
+              <option value="IN">Pemasukan (IN)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="font-semibold text-slate-600">Keterangan</label>
+          <input type="text" id="form-desc" placeholder="Contoh: Belanja beras & minyak" required class="w-full mt-1 p-2 border rounded-lg">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-slate-600">Nominal (Rp)</label>
+            <input type="number" id="form-nominal" placeholder="0" required class="w-full mt-1 p-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-600">Kategori</label>
+            <select id="form-cat" class="w-full mt-1 p-2 border rounded-lg">
+              <option value="Konsumsi">Konsumsi</option>
+              <option value="Tagihan">Tagihan</option>
+              <option value="Transportasi">Transportasi</option>
+              <option value="Keluarga">Keluarga</option>
+              <option value="Pendapatan">Pendapatan</option>
+              <option value="Dana Darurat">Dana Darurat</option>
+              <option value="Lain-lain">Lain-lain</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="font-semibold text-slate-600">Rekening / Akun</label>
+          <select id="form-account" class="w-full mt-1 p-2 border rounded-lg">
+            <option value="Cash">Cash (Tunai)</option>
+            <option value="BCA">BCA (Debit Utama)</option>
+            <option value="SeaBank">SeaBank (Dana Darurat)</option>
+            <option value="Gopay">GoPay (E-Wallet)</option>
+            <option value="Istri">Kas Belanja Istri</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-2 pt-3">
+          <button type="button" onclick="closeModalTrx()" class="px-4 py-2 border rounded-lg">Batal</button>
+          <button type="submit" id="btn-submit-trx" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg">Simpan Transaksi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let appData = null;
+    let currentUser = JSON.parse(localStorage.getItem('user_session') || 'null');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      if (currentUser) {
+        showDashboard();
+      } else {
+        document.getElementById('login-modal').classList.remove('hidden');
+      }
+    });
+
+    async function handleLogin() {
+      const username = document.getElementById('login-user').value.trim();
+      const pin = document.getElementById('login-pin').value.trim();
+      if (!username || !pin) return alert("Silakan isi username dan PIN");
+
+      const btn = document.getElementById('btn-login');
+      btn.innerHTML = "<span>Memverifikasi...</span>";
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(GAS_API_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "login", username, pin })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          currentUser = data.user;
+          localStorage.setItem('user_session', JSON.stringify(currentUser));
+          document.getElementById('login-modal').classList.add('hidden');
+          showDashboard();
+        } else {
+          alert(data.message || "Login gagal.");
+        }
+      } catch (err) {
+        alert("Gagal terhubung ke API Apps Script: " + err.message);
+      } finally {
+        btn.innerHTML = "<span>Masuk ke Akun</span>";
+        btn.disabled = false;
+      }
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('user_session');
+      location.reload();
+    }
+
+    function showDashboard() {
+      document.getElementById('main-app').classList.remove('hidden');
+      document.getElementById('user-display').innerText = `${currentUser.name} (${currentUser.role.toUpperCase()})`;
+
+      // Jika role anak: sembunyikan KPI rekening utama keluarga
+      if (currentUser.role === 'anak') {
+        document.getElementById('kpi-container').classList.add('hidden');
+      }
+
+      fetchDashboardData();
+    }
+
+    async function fetchDashboardData() {
+      try {
+        const url = `${GAS_API_URL}?action=getDashboard&role=${currentUser.role}&name=${encodeURIComponent(currentUser.name)}`;
+        const res = await fetch(url);
+        appData = await res.json();
+
+        if (appData.success) {
+          updateStats();
+          renderTable();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function updateStats() {
+      if (!appData.accounts || appData.accounts.length === 0) return;
+      const total = appData.accounts.reduce((s, a) => s + a.saldo, 0);
+      const emergency = appData.accounts.find(a => a.nama.toLowerCase() === 'seabank')?.saldo || 0;
+      const cadangan = appData.accounts.find(a => a.nama.toLowerCase() === 'istri')?.saldo || 0;
+
+      const piutangTotal = (appData.debts || [])
+        .filter(d => d.tipe === 'PIUTANG' && d.status === 'BELUM')
+        .reduce((s, d) => s + d.nominal, 0);
+
+      document.getElementById('stat-total').innerText = formatIDR(total);
+      document.getElementById('stat-emergency').innerText = formatIDR(emergency);
+      document.getElementById('stat-cadangan').innerText = formatIDR(cadangan);
+      document.getElementById('stat-piutang').innerText = formatIDR(piutangTotal);
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('trx-table-body');
+      tbody.innerHTML = '';
+
+      const filterUser = document.getElementById('user-filter').value;
+      const list = (appData.transactions || []).filter(t => {
+        if (filterUser === 'ALL') return true;
+        return t.user.toLowerCase().includes(filterUser.toLowerCase());
+      });
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Belum ada catatan transaksi yang cocok.</td></tr>`;
+        return;
+      }
+
+      list.forEach(t => {
+        const tr = document.createElement('tr');
+        const isOut = t.tipe === 'OUT';
+        const color = isOut ? 'text-rose-600' : 'text-emerald-600';
+        const sign = isOut ? '-' : '+';
+        const isOwner = t.user.toLowerCase() === currentUser.name.toLowerCase() || currentUser.role === 'suami' || currentUser.role === 'istri';
+
+        tr.innerHTML = `
+          <td class="p-3.5 whitespace-nowrap text-slate-500">${t.tanggal}</td>
+          <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ${t.user.includes('Maulana') ? 'bg-indigo-50 text-indigo-700' : 'bg-pink-50 text-pink-700'}">${t.user}</span></td>
+          <td class="p-3.5 font-medium text-slate-800">${t.keterangan}</td>
+          <td class="p-3.5"><span class="px-2 py-0.5 border rounded-md text-[11px]">${t.kategori}</span></td>
+          <td class="p-3.5 text-slate-500">${t.akun}</td>
+          <td class="p-3.5 text-right font-semibold ${color} whitespace-nowrap">${sign} ${formatIDR(t.nominal)}</td>
+          <td class="p-3.5 text-center">
+            ${isOwner ? `<button onclick="deleteTransaction('${t.id}')" class="text-rose-500 hover:underline text-xs">Hapus</button>` : `<span class="text-slate-300 text-xs">Terkunci</span>`}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function submitTransaction(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit-trx');
+      btn.innerText = "Menyimpan...";
+      btn.disabled = true;
+
+      const payload = {
+        action: "addTransaction",
+        tanggal: document.getElementById('form-date').value,
+        tipe: document.getElementById('form-type').value,
+        keterangan: document.getElementById('form-desc').value,
+        nominal: document.getElementById('form-nominal').value,
+        kategori: document.getElementById('form-cat').value,
+        akun: document.getElementById('form-account').value,
+        user: currentUser.name
+      };
+
+      try {
+        await fetch(GAS_API_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        closeModalTrx();
+        fetchDashboardData();
+      } catch (err) {
+        alert("Gagal mencatat: " + err.message);
+      } finally {
+        btn.innerText = "Simpan Transaksi";
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteTransaction(id) {
+      if (!confirm(`Hapus transaksi ${id}? Saldo rekening akan disesuaikan otomatis.`)) return;
+      try {
+        await fetch(GAS_API_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "deleteTransaction", id })
+        });
+        fetchDashboardData();
+      } catch (err) {
+        alert("Gagal menghapus: " + err.message);
+      }
+    }
+
+    function openModalTrx() {
+      document.getElementById('form-date').valueAsDate = new Date();
+      document.getElementById('modal-trx').classList.remove('hidden');
+      document.getElementById('modal-trx').classList.add('flex');
+    }
+
+    function closeModalTrx() {
+      document.getElementById('modal-trx').classList.add('hidden');
+      document.getElementById('modal-trx').classList.remove('flex');
+    }
+
+    function formatIDR(num) {
+      return "Rp " + (Number(num) || 0).toLocaleString("id-ID");
+    }
+  </script>
+</body>
+</html>
