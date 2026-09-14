@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FamilyFin - Perencana & Database Keuangan</title>
+  <title>MegulFin - Perencana & Database Keuangan</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
@@ -293,6 +293,30 @@
           </div>
         </div>
 
+        <!-- CARD 5: LIST BUDGET PLANNER SPREADSHEET & DETAIL PENGELUARAN (SUB-LIST) -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-5">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="pie-chart" class="w-5 h-5"></i></div>
+                <h3 class="text-base font-bold text-slate-900">List Budget Planner & Detail Realisasi Pengeluaran</h3>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Status pos budget tersinkron dari Sheet <b>Budget</b> dan catatan pengeluaran bulan berjalan.</p>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <span id="budget-current-month" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">Bulan Ini</span>
+              <button onclick="fetchDashboardData()" class="px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
+              </button>
+            </div>
+          </div>
+
+          <!-- KONTENER LIST POS BUDGET -->
+          <div id="budget-planner-list" class="space-y-4">
+            <div class="p-8 text-center text-slate-400 text-xs">Memuat list budget planner dari spreadsheet...</div>
+          </div>
+        </div>
+
       </div>
 
       <!-- KONTEN TAB: PENGELUARAN RUTIN (CRUD LENGKAP) -->
@@ -301,11 +325,16 @@
           <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h3 class="font-bold text-slate-800 text-sm">Daftar Tagihan & Pengeluaran Rutin Bulanan</h3>
-              <p class="text-xs text-slate-500 mt-0.5">Pengeluaran ini memotong pos Kebutuhan Pokok setiap tanggal eksekusinya.</p>
+              <p class="text-xs text-slate-500 mt-0.5">Otomatis tercatat ke transaksi saat tanggal yang diset tiba atau saat membuka aplikasi.</p>
             </div>
-            <button onclick="openModalRutin()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition flex items-center gap-1.5 shadow-md">
-              <i data-lucide="plus" class="w-4 h-4"></i> Tambah Tagihan Rutin
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="triggerCheckRecurring()" id="btn-check-rutin" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="zap" class="w-4 h-4 text-emerald-600"></i> Cek & Jalankan Jadwal Hari Ini
+              </button>
+              <button onclick="openModalRutin()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition flex items-center gap-1.5 shadow-md">
+                <i data-lucide="plus" class="w-4 h-4"></i> Tambah Tagihan Rutin
+              </button>
+            </div>
           </div>
           <div class="overflow-x-auto p-4">
              <table class="w-full text-left text-xs sm:text-sm">
@@ -316,7 +345,7 @@
                         <th class="p-3.5">Nominal (Rp)</th>
                         <th class="p-3.5">Kategori / Akun</th>
                         <th class="p-3.5">Jadwal</th>
-                        <th class="p-3.5 text-center">Status</th>
+                        <th class="p-3.5 text-center">Status Rutin</th>
                         <th class="p-3.5 text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -333,38 +362,56 @@
   <!-- MODAL CATAT TRANSAKSI -->
   <div id="modal-trx" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="font-bold text-slate-900 text-base">Catat Transaksi Baru</h3>
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-4 h-4 text-indigo-600"></i> Catat Transaksi Baru
+        </h3>
+        <button type="button" onclick="closeModalTrx()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
       <form onsubmit="submitTransaction(event)" class="space-y-3 text-xs">
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="font-semibold text-slate-600">Tanggal</label><input type="date" id="form-date" required class="w-full mt-1 p-2 border rounded-lg"></div>
-          <div><label class="font-semibold text-slate-600">Tipe</label>
-            <select id="form-type" class="w-full mt-1 p-2 border rounded-lg">
+          <div>
+            <label class="font-semibold text-slate-600">Tanggal</label>
+            <input type="date" id="form-date" required class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-600">Tipe Transaksi</label>
+            <select id="form-type" onchange="updateCategoryOptions()" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-semibold">
               <option value="OUT">Pengeluaran (OUT)</option>
               <option value="IN">Pemasukan (IN)</option>
             </select>
           </div>
         </div>
-        <div><label class="font-semibold text-slate-600">Keterangan</label><input type="text" id="form-desc" required class="w-full mt-1 p-2 border rounded-lg"></div>
+        <div>
+          <label class="font-semibold text-slate-600">Keterangan Transaksi</label>
+          <input type="text" id="form-desc" placeholder="Contoh: Belanja beras & minyak / Ngopi di Starbucks" required class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white">
+        </div>
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="font-semibold text-slate-600">Nominal</label><input type="number" id="form-nominal" required class="w-full mt-1 p-2 border rounded-lg"></div>
-          <div><label class="font-semibold text-slate-600">Kategori</label>
-            <select id="form-cat" class="w-full mt-1 p-2 border rounded-lg">
-              <option value="Konsumsi">Konsumsi</option>
-              <option value="Tagihan">Tagihan / Utang</option>
-              <option value="Transportasi">Transportasi</option>
-              <option value="Keluarga">Keluarga</option>
-              <option value="Pendapatan">Pendapatan</option>
+          <div>
+            <label class="font-semibold text-slate-600">Nominal (Rp)</label>
+            <input type="number" id="form-nominal" placeholder="0" required class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-bold">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-600">Kategori</label>
+            <select id="form-cat" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-medium">
+              <!-- Diisi otomatis oleh updateCategoryOptions() -->
             </select>
           </div>
         </div>
-        <div><label class="font-semibold text-slate-600">Akun</label>
-          <select id="form-account" class="w-full mt-1 p-2 border rounded-lg">
-            <option value="Cash">Cash</option><option value="BCA">BCA</option><option value="SeaBank">SeaBank</option><option value="Gopay">GoPay</option>
+        <div>
+          <label class="font-semibold text-slate-600">Akun / Rekening</label>
+          <select id="form-account" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-medium">
+            <option value="Cash">Cash / Tunai</option>
+            <option value="BCA">BCA</option>
+            <option value="SeaBank">SeaBank</option>
+            <option value="Gopay">GoPay</option>
           </select>
         </div>
-        <div class="flex justify-end gap-2 pt-3">
-          <button type="button" onclick="closeModalTrx()" class="px-4 py-2 border rounded-lg">Batal</button>
-          <button type="submit" id="btn-submit-trx" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Simpan</button>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModalTrx()" class="px-4 py-2 border rounded-xl hover:bg-slate-50 font-medium">Batal</button>
+          <button type="submit" id="btn-submit-trx" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">Simpan Transaksi</button>
         </div>
       </form>
     </div>
@@ -373,45 +420,71 @@
   <!-- MODAL TAMBAH RUTIN -->
   <div id="modal-rutin" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="font-bold text-slate-900 text-base">Tambah Tagihan Rutin Bulanan</h3>
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i> Tambah Tagihan Rutin Bulanan
+        </h3>
+        <button type="button" onclick="closeModalRutin()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
       <form onsubmit="submitAddRutin(event)" class="space-y-3 text-xs">
         <div>
           <label class="font-semibold text-slate-600">Keterangan Tagihan</label>
-          <input type="text" id="rutin-form-desc" placeholder="Contoh: Cicilan KPR / WiFi / Token Listrik" required class="w-full mt-1 p-2 border rounded-lg">
+          <input type="text" id="rutin-form-desc" placeholder="Contoh: Cicilan KPR / WiFi Indihome / Token Listrik" required class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="font-semibold text-slate-600">Nominal Tagihan (Rp)</label>
-            <input type="number" id="rutin-form-nominal" placeholder="0" required class="w-full mt-1 p-2 border rounded-lg">
+            <input type="number" id="rutin-form-nominal" placeholder="0" required class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-bold">
           </div>
           <div>
-            <label class="font-semibold text-slate-600">Tanggal Eksekusi (1-31)</label>
-            <input type="number" id="rutin-form-date" min="1" max="31" value="1" required class="w-full mt-1 p-2 border rounded-lg">
+            <label class="font-semibold text-slate-600">Tanggal Eksekusi (Tgl 1-31)</label>
+            <input type="number" id="rutin-form-date" min="1" max="31" value="1" required class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-bold">
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="font-semibold text-slate-600">Kategori</label>
-            <select id="rutin-form-cat" class="w-full mt-1 p-2 border rounded-lg">
-              <option value="Tagihan">Tagihan</option>
-              <option value="Keluarga">Keluarga</option>
-              <option value="Konsumsi">Konsumsi</option>
-              <option value="Transportasi">Transportasi</option>
+            <label class="font-semibold text-slate-600">Pos / Kategori</label>
+            <select id="rutin-form-cat" class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-medium">
+              <optgroup label="💳 Cicilan Utang">
+                <option value="Cicilan Utang">Cicilan Utang (Umum)</option>
+                <option value="Cicilan KPR">Cicilan KPR / Rumah</option>
+                <option value="Cicilan Kendaraan">Cicilan Kendaraan (Motor / Mobil)</option>
+                <option value="Paylater & Pinjaman">Paylater & Pinjaman</option>
+                <option value="Kartu Kredit">Kartu Kredit</option>
+              </optgroup>
+              <optgroup label="🏠 Kebutuhan Pokok">
+                <option value="Tagihan & Utilitas">Tagihan Listrik / Air / WiFi</option>
+                <option value="Belanja Bulanan">Belanja Bulanan Pokok</option>
+                <option value="Pendidikan">Pendidikan & SPP</option>
+                <option value="Konsumsi">Konsumsi Rutin</option>
+                <option value="Transportasi & BBM">Transportasi & BBM</option>
+              </optgroup>
+              <optgroup label="☕ Gaya Hidup & Hiburan">
+                <option value="Hiburan & Streaming">Langganan Streaming (Netflix, Spotify)</option>
+                <option value="Gaya Hidup & Hiburan">Gaya Hidup & Hiburan</option>
+              </optgroup>
+              <optgroup label="🛡️ Tabungan & Darurat">
+                <option value="Simpanan Dana Darurat">Simpanan Dana Darurat (SeaBank)</option>
+                <option value="Tabungan Masa Depan">Tabungan Masa Depan</option>
+                <option value="Asuransi">Asuransi Rutin</option>
+              </optgroup>
             </select>
           </div>
           <div>
             <label class="font-semibold text-slate-600">Rekening Pembayaran</label>
-            <select id="rutin-form-acc" class="w-full mt-1 p-2 border rounded-lg">
-              <option value="Cash">Cash</option>
+            <select id="rutin-form-acc" class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-medium">
+              <option value="Cash">Cash / Tunai</option>
               <option value="BCA">BCA</option>
               <option value="SeaBank">SeaBank</option>
               <option value="Gopay">GoPay</option>
             </select>
           </div>
         </div>
-        <div class="flex justify-end gap-2 pt-3">
-          <button type="button" onclick="closeModalRutin()" class="px-4 py-2 border rounded-lg">Batal</button>
-          <button type="submit" id="btn-submit-rutin" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Simpan Rutin</button>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModalRutin()" class="px-4 py-2 border rounded-xl hover:bg-slate-50 font-medium">Batal</button>
+          <button type="submit" id="btn-submit-rutin" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">Simpan Tagihan Rutin</button>
         </div>
       </form>
     </div>
@@ -423,6 +496,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
+      updateCategoryOptions();
       if (currentUser) {
         showDashboard();
       } else {
@@ -469,6 +543,7 @@
 
       if (tabId === 'tab-planner') {
         autoDetectSalary();
+        renderBudgetPlannerList();
       }
     }
 
@@ -613,6 +688,7 @@
       document.getElementById('calc-savings').innerText = formatIDR(salary * savingsPct);
 
       saveBudgetPreferences();
+      renderBudgetPlannerList();
     }
 
     // SIMPAN BUDGET KE SHEET SPREADSHEET
@@ -645,6 +721,7 @@
         const data = await res.json();
         if (data.success) {
           alert("✅ Alokasi Budget Berhasil Disimpan ke Google Spreadsheet!");
+          fetchDashboardData();
         } else {
           alert("Gagal menyimpan: " + data.message);
         }
@@ -745,6 +822,369 @@
       } catch (err) { alert("Error: " + err.message); }
     }
 
+    // ==========================================
+    // MAPPING KATEGORI KE 4 POS BUDGET INDUK
+    // ==========================================
+    function getBudgetCategory(subCategory) {
+      if (!subCategory) return "Kebutuhan Pokok";
+      const s = String(subCategory).trim().toLowerCase();
+
+      // 1. Cicilan Utang
+      if (s.includes("utang") || s.includes("hutang") || s.includes("cicilan") || 
+          s.includes("kpr") || s.includes("paylater") || s.includes("pinjaman") || 
+          s.includes("kartu kredit") || s.includes("kendaraan") || s.includes("elektronik")) {
+        return "Cicilan Utang";
+      }
+
+      // 2. Gaya Hidup & Hiburan
+      if (s.includes("ngopi") || s.includes("cafe") || s.includes("kafe") || 
+          s.includes("hangout") || s.includes("nongkrong") || s.includes("makan di luar") || 
+          s.includes("makan diluar") || s.includes("jajan") || s.includes("hobi") || 
+          s.includes("hiburan") || s.includes("fashion") || s.includes("liburan") || 
+          s.includes("rekreasi") || s.includes("streaming") || s.includes("bioskop") || 
+          s.includes("netflix") || s.includes("spotify") || s.includes("self care") || 
+          s.includes("salon") || s.includes("perawatan") || s.includes("gaya hidup")) {
+        return "Gaya Hidup & Hiburan";
+      }
+
+      // 3. Tabungan & Darurat
+      if (s.includes("tabungan") || s.includes("darurat") || s.includes("investasi") || 
+          s.includes("emas") || s.includes("seabank") || s.includes("saham") || 
+          s.includes("reksadana") || s.includes("asuransi") || s.includes("simpanan") ||
+          s.includes("gaji") || s.includes("dana tambahan") || s.includes("uang sampingan") ||
+          s.includes("thr") || s.includes("bonus") || s.includes("pendapatan")) {
+        return "Tabungan & Darurat";
+      }
+
+      // 4. Kebutuhan Pokok (Default)
+      return "Kebutuhan Pokok";
+    }
+
+    // ==========================================
+    // OPSI KATEGORI TRANSAKSI DINAMIS
+    // ==========================================
+    function updateCategoryOptions() {
+      const type = document.getElementById('form-type') ? document.getElementById('form-type').value : 'OUT';
+      const catSelect = document.getElementById('form-cat');
+      if (!catSelect) return;
+      catSelect.innerHTML = '';
+
+      if (type === 'OUT') {
+        catSelect.innerHTML = `
+          <optgroup label="🏠 Kebutuhan Pokok">
+            <option value="Konsumsi">Konsumsi (Makan & Minum Harian)</option>
+            <option value="Belanja Bulanan">Belanja Bulanan & Dapur</option>
+            <option value="Tagihan & Utilitas">Tagihan (Listrik, Air, WiFi)</option>
+            <option value="Transportasi & BBM">Transportasi & BBM</option>
+            <option value="Kesehatan & Medis">Kesehatan & Obat</option>
+            <option value="Pendidikan">Pendidikan & Sekolah</option>
+            <option value="Kebutuhan Rumah Tangga">Kebutuhan Rumah Tangga</option>
+          </optgroup>
+          <optgroup label="💳 Cicilan Utang">
+            <option value="Cicilan Utang">Cicilan Utang (Umum)</option>
+            <option value="Cicilan KPR">Cicilan KPR / Rumah</option>
+            <option value="Cicilan Kendaraan">Cicilan Motor / Mobil</option>
+            <option value="Cicilan Elektronik">Cicilan Elektronik / Gadget</option>
+            <option value="Paylater & Pinjaman">Paylater & Pinjol</option>
+            <option value="Kartu Kredit">Tagihan Kartu Kredit</option>
+          </optgroup>
+          <optgroup label="☕ Gaya Hidup & Hiburan">
+            <option value="Ngopi di Cafe">Ngopi di Cafe</option>
+            <option value="Hangout">Hangout & Nongkrong</option>
+            <option value="Makan di Luar">Makan di Luar</option>
+            <option value="Jajan di Luar">Jajan di Luar / Camilan</option>
+            <option value="Belanja Hobi & Fashion">Belanja Hobi & Fashion</option>
+            <option value="Hiburan & Streaming">Hiburan & Streaming (Netflix, Spotify)</option>
+            <option value="Liburan & Rekreasi">Liburan & Rekreasi</option>
+          </optgroup>
+          <optgroup label="🛡️ Tabungan & Darurat (Penyisihan)">
+            <option value="Simpanan Dana Darurat">Simpanan Dana Darurat (SeaBank)</option>
+            <option value="Tabungan Masa Depan">Tabungan Masa Depan</option>
+            <option value="Investasi">Investasi (Emas / Saham / Reksadana)</option>
+            <option value="Asuransi">Asuransi</option>
+          </optgroup>
+        `;
+      } else {
+        catSelect.innerHTML = `
+          <optgroup label="💵 Pemasukan & Pendapatan">
+            <option value="Gaji">Gaji Bulanan Utama</option>
+            <option value="Dana Tambahan">Dana Tambahan</option>
+            <option value="Uang Sampingan">Uang Sampingan / Freelance</option>
+            <option value="Bonus & THR">Bonus / Insentif / THR</option>
+            <option value="Hasil Usaha / Investasi">Hasil Usaha / Investasi</option>
+            <option value="Pendapatan Lainnya">Pendapatan Lainnya</option>
+          </optgroup>
+        `;
+      }
+    }
+
+    // ==========================================
+    // LIST BUDGET PLANNER & DETAIL SUB-LIST
+    // ==========================================
+    let expandedBudgetGroups = {};
+
+    function toggleBudgetDetail(groupName) {
+      expandedBudgetGroups[groupName] = !expandedBudgetGroups[groupName];
+      renderBudgetPlannerList();
+    }
+
+    function renderBudgetPlannerList() {
+      const container = document.getElementById('budget-planner-list');
+      if (!container) return;
+
+      const now = new Date();
+      const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      const currentMonthText = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+      
+      const badgeMonth = document.getElementById('budget-current-month');
+      if (badgeMonth) badgeMonth.innerText = `Periode: ${currentMonthText}`;
+
+      // Definisi 4 Pos Budget Utama
+      const budgetDefinitions = [
+        {
+          key: "Kebutuhan Pokok",
+          icon: "home",
+          desc: "Dapur, makan harian, belanja bulanan, utilitas & operasional rumah",
+          colorTheme: "indigo",
+          borderClass: "border-indigo-100",
+          bgClass: "bg-indigo-50/40",
+          textClass: "text-indigo-700",
+          barColor: "bg-indigo-600",
+          sliderId: "slider-needs"
+        },
+        {
+          key: "Cicilan Utang",
+          icon: "credit-card",
+          desc: "Alokasi pembayaran cicilan utang, KPR, paylater & kartu kredit (terekam di rutin)",
+          colorTheme: "rose",
+          borderClass: "border-rose-100",
+          bgClass: "bg-rose-50/40",
+          textClass: "text-rose-700",
+          barColor: "bg-rose-600",
+          sliderId: "slider-debt"
+        },
+        {
+          key: "Gaya Hidup & Hiburan",
+          icon: "coffee",
+          desc: "Ngopi cafe, makan di luar, jajan di luar, rekreasi, belanja hobi & streaming",
+          colorTheme: "amber",
+          borderClass: "border-amber-100",
+          bgClass: "bg-amber-50/40",
+          textClass: "text-amber-700",
+          barColor: "bg-amber-600",
+          sliderId: "slider-wants"
+        },
+        {
+          key: "Tabungan & Darurat",
+          icon: "shield-check",
+          desc: "Alokasi dana darurat (SeaBank), tabungan masa depan & investasi",
+          colorTheme: "emerald",
+          borderClass: "border-emerald-100",
+          bgClass: "bg-emerald-50/40",
+          textClass: "text-emerald-700",
+          barColor: "bg-emerald-600",
+          sliderId: "slider-savings"
+        }
+      ];
+
+      // Ambil transaksi bulan ini
+      const allTrx = (appData && appData.transactions) ? appData.transactions : [];
+      const currentMonthExpenses = allTrx.filter(t => t.tipe === 'OUT' && t.tanggal && t.tanggal.startsWith(currentYearMonth));
+
+      // Ambil data budget dari sheet Budget
+      const sheetBudgets = (appData && appData.budgets) ? appData.budgets : [];
+      const salary = parseFloat(document.getElementById('input-salary')?.value) || 0;
+
+      container.innerHTML = '';
+
+      budgetDefinitions.forEach((def) => {
+        // Cari data limit dari Sheet Budget
+        const sheetItem = sheetBudgets.find(b => String(b.kategori).trim().toLowerCase() === def.key.toLowerCase());
+        
+        let limit = 0;
+        if (sheetItem && sheetItem.limit > 0) {
+          limit = sheetItem.limit;
+        } else if (salary > 0) {
+          const sliderEl = document.getElementById(def.sliderId);
+          const pct = sliderEl ? parseInt(sliderEl.value, 10) / 100 : 0.25;
+          limit = Math.round(salary * pct);
+        }
+
+        // Filter pengeluaran yang masuk ke pos budget ini
+        const groupExpenses = currentMonthExpenses.filter(t => getBudgetCategory(t.kategori) === def.key);
+        const realTerpakai = groupExpenses.reduce((sum, t) => sum + t.nominal, 0);
+        const sisa = limit - realTerpakai;
+        const pctReal = limit > 0 ? (realTerpakai / limit) * 100 : 0;
+        const isExpanded = !!expandedBudgetGroups[def.key];
+
+        // Status alert & warna bar
+        let statusBadge = '';
+        let barColorClass = def.barColor;
+        if (limit > 0 && pctReal >= 100) {
+          statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700 animate-pulse border border-rose-200">🚨 OVERBUDGET (${pctReal.toFixed(1)}%)</span>`;
+          barColorClass = "bg-rose-600";
+        } else if (limit > 0 && pctReal >= 80) {
+          statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">⚠️ Waspada (${pctReal.toFixed(1)}%)</span>`;
+          barColorClass = "bg-amber-500";
+        } else {
+          statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">✅ Terkendali (${pctReal.toFixed(1)}%)</span>`;
+        }
+
+        const barWidth = Math.min(pctReal, 100);
+
+        // Render sub-list tabel detail pengeluaran
+        let subListHtml = '';
+        if (isExpanded) {
+          if (groupExpenses.length === 0) {
+            subListHtml = `
+              <div class="mt-4 pt-4 border-t border-slate-100">
+                <div class="p-6 text-center text-slate-400 bg-white/70 rounded-xl text-xs">
+                  <i data-lucide="inbox" class="w-6 h-6 mx-auto mb-1 text-slate-300"></i>
+                  Belum ada catatan pengeluaran di pos <b>${def.key}</b> untuk bulan ini (${currentMonthText}).
+                </div>
+              </div>
+            `;
+          } else {
+            let rowsHtml = '';
+            groupExpenses.forEach((trx) => {
+              rowsHtml += `
+                <tr class="hover:bg-slate-50/80 transition text-xs">
+                  <td class="p-3 text-slate-500 whitespace-nowrap">${trx.tanggal}</td>
+                  <td class="p-3 font-semibold text-slate-800">${trx.keterangan}</td>
+                  <td class="p-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-medium border bg-white text-slate-600">${trx.kategori}</span></td>
+                  <td class="p-3 text-slate-500 whitespace-nowrap"><span class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">${trx.akun}</span></td>
+                  <td class="p-3 text-slate-500 text-[11px]">${trx.user || '-'}</td>
+                  <td class="p-3 text-right font-bold text-rose-600 whitespace-nowrap">- ${formatIDR(trx.nominal)}</td>
+                </tr>
+              `;
+            });
+
+            subListHtml = `
+              <div class="mt-4 pt-4 border-t border-slate-100 space-y-3">
+                <div class="flex justify-between items-center px-1">
+                  <span class="text-xs font-bold text-slate-700">Rincian Transaksi Pengeluaran (${groupExpenses.length} transaksi)</span>
+                  <span class="text-xs font-bold text-rose-600">Subtotal Terpakai: ${formatIDR(realTerpakai)}</span>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-100 bg-white">
+                  <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-100">
+                      <tr>
+                        <th class="p-2.5">Tanggal</th>
+                        <th class="p-2.5">Keterangan</th>
+                        <th class="p-2.5">Sub-Kategori</th>
+                        <th class="p-2.5">Akun</th>
+                        <th class="p-2.5">User</th>
+                        <th class="p-2.5 text-right">Nominal</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                      ${rowsHtml}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+          }
+        }
+
+        const cardEl = document.createElement('div');
+        cardEl.className = `p-5 rounded-2xl border ${def.borderClass} ${def.bgClass} shadow-sm transition`;
+        cardEl.innerHTML = `
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-start gap-3">
+              <div class="p-2.5 rounded-xl bg-white shadow-sm border border-slate-100 ${def.textClass}">
+                <i data-lucide="${def.icon}" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="font-bold text-slate-900 text-sm sm:text-base">${def.key}</h4>
+                  ${statusBadge}
+                </div>
+                <p class="text-[11px] text-slate-500 mt-0.5">${def.desc}</p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4 sm:gap-6 bg-white/90 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-slate-100">
+              <div>
+                <span class="block text-[10px] font-semibold text-slate-400 uppercase">Batas Budget</span>
+                <span class="text-xs sm:text-sm font-bold text-slate-800">${formatIDR(limit)}</span>
+              </div>
+              <div>
+                <span class="block text-[10px] font-semibold text-slate-400 uppercase">Terpakai Real</span>
+                <span class="text-xs sm:text-sm font-bold text-rose-600">${formatIDR(realTerpakai)}</span>
+              </div>
+              <div>
+                <span class="block text-[10px] font-semibold text-slate-400 uppercase">Sisa Budget</span>
+                <span class="text-xs sm:text-sm font-bold ${sisa < 0 ? 'text-rose-600' : 'text-emerald-600'}">${formatIDR(sisa)}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- PROGRESS BAR -->
+          <div class="mt-4 space-y-1.5">
+            <div class="flex justify-between text-[11px] font-semibold text-slate-600">
+              <span>Penggunaan: ${formatIDR(realTerpakai)} dari ${formatIDR(limit)}</span>
+              <span class="${pctReal >= 100 ? 'text-rose-600 font-bold' : ''}">${pctReal.toFixed(1)}%</span>
+            </div>
+            <div class="w-full bg-slate-200/80 rounded-full h-2.5 overflow-hidden">
+              <div class="${barColorClass} h-2.5 rounded-full transition-all duration-500" style="width: ${barWidth}%"></div>
+            </div>
+          </div>
+
+          <!-- TOGGLE DETAIL PENGELUARAN -->
+          <div class="mt-3 flex justify-between items-center">
+            <button onclick="toggleBudgetDetail('${def.key}')" class="text-xs font-bold ${def.textClass} hover:underline flex items-center gap-1">
+              <i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4"></i>
+              <span>${isExpanded ? 'Tutup Rincian' : `Lihat Detail Pengeluaran (${groupExpenses.length} transaksi)`}</span>
+            </button>
+            <span class="text-[10px] text-slate-400 font-medium">Tersinkron Sheet Budget</span>
+          </div>
+
+          ${subListHtml}
+        `;
+
+        container.appendChild(cardEl);
+      });
+
+      lucide.createIcons();
+    }
+
+    // ==========================================
+    // TRIGGER CEK JADWAL RUTIN OTOMATIS
+    // ==========================================
+    async function triggerCheckRecurring() {
+      const btn = document.getElementById('btn-check-rutin');
+      const origHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Memproses...`;
+        btn.disabled = true;
+        lucide.createIcons();
+      }
+
+      try {
+        const res = await fetch(`${GAS_API_URL}?action=checkRecurring`);
+        const data = await res.json();
+        if (data.success) {
+          alert(`✅ ${data.message || 'Pengecekan rutin selesai!'}`);
+          fetchDashboardData();
+        } else {
+          alert(`Info: ${data.message || 'Tidak ada eksekusi rutin baru.'}`);
+        }
+      } catch (err) {
+        alert("Error cek rutin: " + err.message);
+      } finally {
+        if (btn) {
+          btn.innerHTML = origHtml;
+          btn.disabled = false;
+          lucide.createIcons();
+        }
+      }
+    }
+
+    // ==========================================
+    // RENDER TABEL RUTIN DENGAN STATUS JADWAL
+    // ==========================================
     function renderRutinTable() {
       const tbody = document.getElementById('rutin-table-body');
       tbody.innerHTML = '';
@@ -754,6 +1194,10 @@
         return tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Belum ada tagihan rutin bulanan. Klik tombol "+ Tambah Tagihan Rutin" untuk menambahkan.</td></tr>`;
       }
 
+      const now = new Date();
+      const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const allTrx = appData.transactions || [];
+
       rutins.forEach(r => {
         const tr = document.createElement('tr');
         const isAktif = r.status === 'AKTIF';
@@ -761,9 +1205,25 @@
           ? `<button onclick="toggleStatusRutin('${r.id}')" class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-md text-[10px] font-bold hover:bg-emerald-200">AKTIF</button>`
           : `<button onclick="toggleStatusRutin('${r.id}')" class="px-2 py-1 bg-slate-100 text-slate-500 rounded-md text-[10px] font-bold hover:bg-slate-200">NONAKTIF</button>`;
 
+        // Cek apakah sudah terbit di bulan ini
+        const alreadyRecorded = allTrx.some(t => {
+          const isMonthMatch = t.tanggal && t.tanggal.startsWith(currentYearMonth);
+          const isKetMatch = t.keterangan && (t.keterangan.toLowerCase().includes(r.keterangan.toLowerCase()) || t.keterangan.includes(r.id));
+          return isMonthMatch && isKetMatch;
+        });
+
+        const execBadge = alreadyRecorded
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800"><i data-lucide="check-circle" class="w-3 h-3"></i> Masuk Transaksi</span>`
+          : (now.getDate() >= r.execDate
+              ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800"><i data-lucide="clock" class="w-3 h-3"></i> Menunggu Trigger</span>`
+              : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600"><i data-lucide="calendar" class="w-3 h-3"></i> Tgl ${r.execDate}</span>`);
+
         tr.innerHTML = `
           <td class="p-3.5 text-slate-400 font-mono text-xs">${r.id}</td>
-          <td class="p-3.5 font-bold text-slate-800">${r.keterangan}</td>
+          <td class="p-3.5">
+            <p class="font-bold text-slate-800">${r.keterangan}</p>
+            <div class="mt-1">${execBadge}</div>
+          </td>
           <td class="p-3.5 font-bold text-rose-600 whitespace-nowrap">${formatIDR(r.nominal)}</td>
           <td class="p-3.5 text-slate-500">${r.kategori} <br/><span class="text-[10px] bg-slate-100 px-1 rounded border">Via: ${r.akun}</span></td>
           <td class="p-3.5 text-indigo-700 font-medium whitespace-nowrap">Tiap Tgl ${r.execDate} <br/><span class="text-[10px] text-slate-400">(${r.freq})</span></td>
@@ -774,12 +1234,12 @@
         `;
         tbody.appendChild(tr);
       });
+      lucide.createIcons();
     }
 
     // ==========================================
-    // FETCH DATA UTAMA
+    // FETCH DATA UTAMA & SINKRONISASI
     // ==========================================
-
     async function fetchDashboardData() {
       try {
         const url = `${GAS_API_URL}?action=getDashboard&role=${currentUser.role}&name=${encodeURIComponent(currentUser.name)}`;
@@ -790,6 +1250,7 @@
           updateStats();
           renderTable();
           renderRutinTable();
+          renderBudgetPlannerList();
         }
       } catch (err) { console.error(err); }
     }
@@ -822,7 +1283,7 @@
           <td class="p-3.5 whitespace-nowrap text-slate-500">${t.tanggal}</td>
           <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700">${t.user}</span></td>
           <td class="p-3.5 font-medium text-slate-800">${t.keterangan}</td>
-          <td class="p-3.5"><span class="px-2 py-0.5 border rounded-md text-[11px]">${t.kategori}</span></td>
+          <td class="p-3.5"><span class="px-2 py-0.5 border rounded-md text-[11px] bg-slate-50">${t.kategori}</span></td>
           <td class="p-3.5 text-slate-500">${t.akun}</td>
           <td class="p-3.5 text-right font-semibold ${color} whitespace-nowrap">${t.tipe === 'OUT' ? '-' : '+'} ${formatIDR(t.nominal)}</td>
         `;
@@ -832,6 +1293,10 @@
 
     async function submitTransaction(e) {
       e.preventDefault();
+      const btn = document.getElementById('btn-submit-trx');
+      btn.innerText = "Menyimpan...";
+      btn.disabled = true;
+
       const payload = {
         action: "addTransaction",
         tanggal: document.getElementById('form-date').value,
@@ -842,13 +1307,30 @@
         akun: document.getElementById('form-account').value,
         user: currentUser.name
       };
-      await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
-      closeModalTrx();
-      fetchDashboardData();
+
+      try {
+        await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
+        closeModalTrx();
+        fetchDashboardData();
+      } catch (err) {
+        alert("Gagal menyimpan transaksi: " + err.message);
+      } finally {
+        btn.innerText = "Simpan Transaksi";
+        btn.disabled = false;
+      }
     }
 
-    function openModalTrx() { document.getElementById('form-date').valueAsDate = new Date(); document.getElementById('modal-trx').classList.remove('hidden'); document.getElementById('modal-trx').classList.add('flex'); }
-    function closeModalTrx() { document.getElementById('modal-trx').classList.add('hidden'); document.getElementById('modal-trx').classList.remove('flex'); }
+    function openModalTrx() { 
+      document.getElementById('form-date').valueAsDate = new Date(); 
+      updateCategoryOptions();
+      document.getElementById('modal-trx').classList.remove('hidden'); 
+      document.getElementById('modal-trx').classList.add('flex'); 
+      lucide.createIcons();
+    }
+    function closeModalTrx() { 
+      document.getElementById('modal-trx').classList.add('hidden'); 
+      document.getElementById('modal-trx').classList.remove('flex'); 
+    }
     function formatIDR(num) { return "Rp " + (Number(num) || 0).toLocaleString("id-ID"); }
   </script>
 </body>
