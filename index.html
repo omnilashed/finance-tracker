@@ -72,6 +72,7 @@
         <button onclick="switchTab('tab-dashboard')" id="btn-tab-dashboard" class="tab-btn active px-4 py-2.5 text-sm font-semibold rounded-t-lg transition whitespace-nowrap">Dashboard & Transaksi</button>
         <button onclick="switchTab('tab-planner')" id="btn-tab-planner" class="tab-btn px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-indigo-600 rounded-t-lg transition whitespace-nowrap">Budget Planner Fleksibel & Utang</button>
         <button onclick="switchTab('tab-rutin')" id="btn-tab-rutin" class="tab-btn px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-indigo-600 rounded-t-lg transition whitespace-nowrap">Tagihan & Rutin Bulanan</button>
+        <button onclick="switchTab('tab-rekening')" id="btn-tab-rekening" class="tab-btn px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-indigo-600 rounded-t-lg transition whitespace-nowrap flex items-center gap-1.5"><i data-lucide="landmark" class="w-4 h-4"></i> Data Rekening</button>
       </div>
 
       <!-- KONTEN TAB: DASHBOARD & TRANSAKSI -->
@@ -95,23 +96,104 @@
           </div>
         </div>
 
-        <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-          <div class="flex items-center gap-2">
-            <label class="text-xs font-bold text-slate-500">Filter Data:</label>
-            <select id="user-filter" onchange="renderTable()" class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 font-medium">
-              <option value="ALL">Semua Transaksi Keluarga</option>
+        <!-- FILTER BAR DENGAN FILTER BULAN & TAHUN -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
+            <span class="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+              <i data-lucide="filter" class="w-3.5 h-3.5 text-indigo-600"></i> Filter:
+            </span>
+
+            <!-- Filter User -->
+            <select id="user-filter" onchange="applyDashboardFilter()" class="px-2.5 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500">
+              <option value="ALL">Semua Anggota</option>
               <option value="Maulana Hady">Hanya Suami</option>
               <option value="Mega Puspita">Hanya Istri</option>
             </select>
+
+            <!-- Filter Bulan -->
+            <div class="flex items-center gap-1">
+              <label for="filter-month" class="text-[11px] font-semibold text-slate-400">Bulan:</label>
+              <select id="filter-month" onchange="applyDashboardFilter()" class="px-2.5 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 font-semibold text-indigo-700 focus:bg-white focus:ring-2 focus:ring-indigo-500">
+                <option value="ALL">Semua Bulan</option>
+                <option value="01">Januari</option>
+                <option value="02">Februari</option>
+                <option value="03">Maret</option>
+                <option value="04">April</option>
+                <option value="05">Mei</option>
+                <option value="06">Juni</option>
+                <option value="07">Juli</option>
+                <option value="08">Agustus</option>
+                <option value="09">September</option>
+                <option value="10">Oktober</option>
+                <option value="11">November</option>
+                <option value="12">Desember</option>
+              </select>
+            </div>
+
+            <!-- Filter Tahun -->
+            <div class="flex items-center gap-1">
+              <label for="filter-year" class="text-[11px] font-semibold text-slate-400">Tahun:</label>
+              <select id="filter-year" onchange="applyDashboardFilter()" class="px-2.5 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 font-semibold text-indigo-700 focus:bg-white focus:ring-2 focus:ring-indigo-500">
+                <option value="ALL">Semua Tahun</option>
+              </select>
+            </div>
+
+            <!-- Tombol Cepat -->
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="setDashboardDateFilterToCurrentMonth()" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-xl text-xs transition whitespace-nowrap">
+                Bulan Ini
+              </button>
+              <button type="button" onclick="resetDashboardDateFilter()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl text-xs transition whitespace-nowrap">
+                Semua
+              </button>
+            </div>
           </div>
-          <button onclick="openModalTrx()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition shadow-md">
-            <i data-lucide="plus" class="w-4 h-4 inline-block mr-1"></i> Catat Transaksi
+
+          <button onclick="openModalTrx()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition shadow-md flex items-center gap-1.5 whitespace-nowrap">
+            <i data-lucide="plus" class="w-4 h-4"></i> Catat Transaksi
           </button>
         </div>
 
+        <!-- STATISTIK CASHFLOW PERIODE TERFILTER -->
+        <div id="period-cashflow-container" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-gradient-to-br from-emerald-50 to-white p-4 rounded-2xl border border-emerald-100 shadow-sm flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Pemasukan (<span id="label-filter-period-in">Periode Ini</span>)</span>
+              <h4 id="stat-period-in" class="text-xl font-extrabold text-emerald-700 mt-0.5">Rp 0</h4>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <i data-lucide="arrow-down-left" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="bg-gradient-to-br from-rose-50 to-white p-4 rounded-2xl border border-rose-100 shadow-sm flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-bold text-rose-600 uppercase tracking-wider block">Pengeluaran (<span id="label-filter-period-out">Periode Ini</span>)</span>
+              <h4 id="stat-period-out" class="text-xl font-extrabold text-rose-700 mt-0.5">Rp 0</h4>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">
+              <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-2xl border border-indigo-100 shadow-sm flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">Arus Kas Bersih (<span id="label-filter-period-net">Net Cashflow</span>)</span>
+              <h4 id="stat-period-net" class="text-xl font-extrabold text-indigo-700 mt-0.5">Rp 0</h4>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+              <i data-lucide="wallet" class="w-5 h-5"></i>
+            </div>
+          </div>
+        </div>
+
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="font-bold text-slate-800 text-sm">Riwayat Transaksi Terkini</h3>
+          <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+              <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                Riwayat Transaksi Terkini
+                <span id="trx-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700">0 transaksi</span>
+              </h3>
+              <p id="trx-filter-desc" class="text-xs text-slate-400 mt-0.5">Menampilkan semua transaksi</p>
+            </div>
             <button onclick="fetchDashboardData()" class="text-xs text-indigo-600 hover:underline flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh</button>
           </div>
           <div class="overflow-x-auto">
@@ -371,6 +453,105 @@
              </table>
           </div>
         </div>
+      </div>
+
+      <!-- KONTEN TAB: DATA REKENING TERUPDATE DARI SPREADSHEET -->
+      <div id="tab-rekening" class="tab-content hidden space-y-6">
+        
+        <!-- HEADER TAB REKENING -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+          <div>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                <i data-lucide="landmark" class="w-4 h-4"></i>
+              </div>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900">Status & Saldo Rekening Terupdate</h3>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Data saldo akun dan kas keluarga yang tersinkronisasi langsung dengan sheet <span class="font-semibold text-slate-700">Rekening</span> di spreadsheet.</p>
+          </div>
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2.5">
+            <span id="rekening-last-updated" class="text-[11px] text-slate-400 font-medium">Terakhir sinkron: Belum ada</span>
+            <button onclick="refreshRekeningTab()" id="btn-refresh-rekening" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sinkronkan Rekening
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI SUMMARY REKENING -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Total Saldo Kas & Bank</span>
+            <h3 id="rek-stat-total" class="text-2xl font-black text-slate-900 mt-1">Rp 0</h3>
+            <span class="text-[11px] text-slate-400 mt-0.5 block">Akumulasi seluruh rekening aktif</span>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Total Saldo Awal Terdaftar</span>
+            <h3 id="rek-stat-awal" class="text-2xl font-bold text-slate-700 mt-1">Rp 0</h3>
+            <span class="text-[11px] text-slate-400 mt-0.5 block">Baseline saldo awal di sheet</span>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Akumulasi Pertumbuhan</span>
+            <h3 id="rek-stat-perubahan" class="text-2xl font-bold text-emerald-600 mt-1">Rp 0</h3>
+            <span class="text-[11px] text-slate-400 mt-0.5 block">Selisih saldo saat ini vs awal</span>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Rekening Terdaftar</span>
+            <h3 id="rek-stat-count" class="text-2xl font-bold text-indigo-600 mt-1">0 Akun</h3>
+            <span class="text-[11px] text-slate-400 mt-0.5 block">Bank, e-wallet & kas tunai</span>
+          </div>
+        </div>
+
+        <!-- GRID KARTU REKENING (VISUAL BANK CARDS) -->
+        <div>
+          <div class="flex justify-between items-center mb-3">
+            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <i data-lucide="layout-grid" class="w-4 h-4 text-indigo-600"></i> Distribusi Saldo per Rekening
+            </h4>
+            <span class="text-xs text-slate-400">Porsi terhadap total dana</span>
+          </div>
+          <div id="rekening-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div class="col-span-full p-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-100">
+              Sedang memuat data rekening dari spreadsheet...
+            </div>
+          </div>
+        </div>
+
+        <!-- TABEL RINCIAN SHEET REKENING -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <i data-lucide="table" class="w-4 h-4 text-indigo-600"></i> Data Rincian Sheet Rekening
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Daftar lengkap akun beserta saldo awal, kalkulasi mutasi transaksi, dan saldo akhir.</p>
+            </div>
+            <div class="w-full sm:w-64">
+              <input type="text" id="search-rekening" oninput="renderRekeningTab()" placeholder="Cari nama akun/bank..." class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500">
+            </div>
+          </div>
+          <div class="overflow-x-auto p-4">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[11px] tracking-wider">
+                <tr>
+                  <th class="p-3.5 text-center w-12">No</th>
+                  <th class="p-3.5">Nama Akun / Bank</th>
+                  <th class="p-3.5 text-right">Saldo Awal</th>
+                  <th class="p-3.5 text-right">Total Masuk (IN)</th>
+                  <th class="p-3.5 text-right">Total Keluar (OUT)</th>
+                  <th class="p-3.5 text-right">Saldo Saat Ini</th>
+                  <th class="p-3.5 text-center">Porsi (%)</th>
+                  <th class="p-3.5 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody id="rekening-table-body" class="divide-y divide-slate-100 text-slate-700">
+                <tr><td colspan="8" class="p-6 text-center text-slate-400">Sedang memuat data dari spreadsheet...</td></tr>
+              </tbody>
+              <tfoot id="rekening-table-foot" class="bg-slate-50/80 font-bold border-t border-slate-200 text-xs">
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
       </div>
 
     </main>
@@ -716,6 +897,8 @@
         updatePlannerPeriodOptions();
         renderSalarySources();
         renderBudgetPlannerList();
+      } else if (tabId === 'tab-rekening') {
+        renderRekeningTab();
       }
     }
 
@@ -1621,6 +1804,129 @@
     }
 
     // ==========================================
+    // FILTER TANGGAL (BULAN & TAHUN) DASHBOARD
+    // ==========================================
+    let dashboardDateFilterInitialized = false;
+
+    const INDONESIAN_MONTHS = [
+      "", "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+
+    function initDashboardDateFilter() {
+      const yearSelect = document.getElementById('filter-year');
+      const monthSelect = document.getElementById('filter-month');
+      if (!yearSelect || !monthSelect) return;
+
+      const yearSet = new Set();
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+
+      yearSet.add(currentYear);
+      yearSet.add(currentYear - 1);
+      yearSet.add(currentYear + 1);
+
+      (appData?.transactions || []).forEach(t => {
+        if (t.tanggal) {
+          const y = parseInt(t.tanggal.slice(0, 4), 10);
+          if (!isNaN(y) && y > 2000 && y < 2100) {
+            yearSet.add(y);
+          }
+        }
+      });
+
+      const sortedYears = Array.from(yearSet).sort((a, b) => b - a);
+      const prevSelectedYear = yearSelect.value;
+
+      yearSelect.innerHTML = '<option value="ALL">Semua Tahun</option>';
+      sortedYears.forEach(y => {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.innerText = String(y);
+        yearSelect.appendChild(opt);
+      });
+
+      if (!dashboardDateFilterInitialized) {
+        monthSelect.value = currentMonth;
+        yearSelect.value = String(currentYear);
+        dashboardDateFilterInitialized = true;
+      } else if (prevSelectedYear) {
+        yearSelect.value = prevSelectedYear;
+      }
+    }
+
+    function setDashboardDateFilterToCurrentMonth() {
+      const monthSelect = document.getElementById('filter-month');
+      const yearSelect = document.getElementById('filter-year');
+      if (monthSelect) monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
+      if (yearSelect) yearSelect.value = String(new Date().getFullYear());
+      applyDashboardFilter();
+    }
+
+    function resetDashboardDateFilter() {
+      const monthSelect = document.getElementById('filter-month');
+      const yearSelect = document.getElementById('filter-year');
+      const userSelect = document.getElementById('user-filter');
+      if (monthSelect) monthSelect.value = 'ALL';
+      if (yearSelect) yearSelect.value = 'ALL';
+      if (userSelect) userSelect.value = 'ALL';
+      applyDashboardFilter();
+    }
+
+    function applyDashboardFilter() {
+      renderTable();
+      updateStats();
+    }
+
+    function getFilteredTransactions() {
+      const filterUser = document.getElementById('user-filter')?.value || 'ALL';
+      const filterMonth = document.getElementById('filter-month')?.value || 'ALL';
+      const filterYear = document.getElementById('filter-year')?.value || 'ALL';
+
+      return (appData?.transactions || []).filter(t => {
+        // Filter User
+        if (filterUser !== 'ALL') {
+          if (!t.user || !t.user.toLowerCase().includes(filterUser.toLowerCase())) {
+            return false;
+          }
+        }
+        // Filter Date (Bulan & Tahun saja)
+        if (!t.tanggal) {
+          return (filterMonth === 'ALL' && filterYear === 'ALL');
+        }
+
+        const tYear = t.tanggal.slice(0, 4);
+        const tMonth = t.tanggal.slice(5, 7);
+
+        if (filterYear !== 'ALL' && tYear !== filterYear) return false;
+        if (filterMonth !== 'ALL' && tMonth !== filterMonth) return false;
+
+        return true;
+      });
+    }
+
+    function updateAccountDropdowns() {
+      const accounts = appData?.accounts || [];
+      if (accounts.length === 0) return;
+
+      const targetSelectIds = ['form-account', 'edit-form-account', 'rutin-form-akun', 'edit-rutin-acc'];
+      targetSelectIds.forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const currentVal = sel.value;
+        sel.innerHTML = '';
+        accounts.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a.nama;
+          opt.innerText = a.nama;
+          if (a.nama === currentVal) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      });
+    }
+
+    // ==========================================
     // FETCH DATA UTAMA & SINKRONISASI
     // ==========================================
     async function fetchDashboardData() {
@@ -1630,36 +1936,117 @@
         appData = await res.json();
 
         if (appData.success) {
+          initDashboardDateFilter();
+          updateAccountDropdowns();
           updateStats();
           renderTable();
           renderRutinTable();
           updatePlannerPeriodOptions();
           renderSalarySources();
           renderBudgetPlannerList();
+          renderRekeningTab();
         }
       } catch (err) { console.error(err); }
     }
 
     function updateStats() {
-      if (!appData.accounts || appData.accounts.length === 0) return;
-      const total = appData.accounts.reduce((s, a) => s + a.saldo, 0);
-      const emergency = appData.accounts.find(a => a.nama.toLowerCase() === 'seabank')?.saldo || 0;
-      const cadangan = appData.accounts.find(a => a.nama.toLowerCase() === 'istri')?.saldo || 0;
-      const piutangTotal = (appData.debts || []).filter(d => d.tipe === 'PIUTANG' && d.status === 'BELUM').reduce((s, d) => s + d.nominal, 0);
+      // 1. Update Global Asset & Debt KPIs
+      if (appData?.accounts && appData.accounts.length > 0) {
+        const total = appData.accounts.reduce((s, a) => s + a.saldo, 0);
+        const emergency = appData.accounts.find(a => a.nama.toLowerCase().includes('seabank'))?.saldo || 0;
+        const cadangan = appData.accounts.find(a => a.nama.toLowerCase().includes('istri'))?.saldo || 0;
+        const piutangTotal = (appData.debts || []).filter(d => d.tipe === 'PIUTANG' && d.status === 'BELUM').reduce((s, d) => s + d.nominal, 0);
 
-      document.getElementById('stat-total').innerText = formatIDR(total);
-      document.getElementById('stat-emergency').innerText = formatIDR(emergency);
-      document.getElementById('stat-cadangan').innerText = formatIDR(cadangan);
-      document.getElementById('stat-piutang').innerText = formatIDR(piutangTotal);
+        const elTotal = document.getElementById('stat-total');
+        const elEmerg = document.getElementById('stat-emergency');
+        const elCad = document.getElementById('stat-cadangan');
+        const elPiut = document.getElementById('stat-piutang');
+
+        if (elTotal) elTotal.innerText = formatIDR(total);
+        if (elEmerg) elEmerg.innerText = formatIDR(emergency);
+        if (elCad) elCad.innerText = formatIDR(cadangan);
+        if (elPiut) elPiut.innerText = formatIDR(piutangTotal);
+      }
+
+      // 2. Update Cashflow Stats Berdasarkan Filter Periode Bulan & Tahun
+      const filteredList = getFilteredTransactions();
+      const filterMonth = document.getElementById('filter-month')?.value || 'ALL';
+      const filterYear = document.getElementById('filter-year')?.value || 'ALL';
+
+      let periodDesc = "Semua Periode";
+      if (filterMonth !== 'ALL' && filterYear !== 'ALL') {
+        const mName = INDONESIAN_MONTHS[parseInt(filterMonth, 10)] || filterMonth;
+        periodDesc = `${mName} ${filterYear}`;
+      } else if (filterMonth !== 'ALL') {
+        const mName = INDONESIAN_MONTHS[parseInt(filterMonth, 10)] || filterMonth;
+        periodDesc = `Bulan ${mName}`;
+      } else if (filterYear !== 'ALL') {
+        periodDesc = `Tahun ${filterYear}`;
+      }
+
+      let totalIn = 0;
+      let totalOut = 0;
+
+      filteredList.forEach(t => {
+        const nom = parseFloat(t.nominal) || 0;
+        if (t.tipe === 'IN') totalIn += nom;
+        else if (t.tipe === 'OUT') totalOut += nom;
+      });
+
+      const netCashflow = totalIn - totalOut;
+
+      const elPeriodIn = document.getElementById('stat-period-in');
+      const elPeriodOut = document.getElementById('stat-period-out');
+      const elPeriodNet = document.getElementById('stat-period-net');
+
+      if (elPeriodIn) elPeriodIn.innerText = formatIDR(totalIn);
+      if (elPeriodOut) elPeriodOut.innerText = formatIDR(totalOut);
+      if (elPeriodNet) {
+        elPeriodNet.innerText = (netCashflow >= 0 ? '+ ' : '- ') + formatIDR(Math.abs(netCashflow));
+        elPeriodNet.className = `text-xl font-extrabold mt-0.5 ${netCashflow >= 0 ? 'text-indigo-700' : 'text-rose-700'}`;
+      }
+
+      const lblIn = document.getElementById('label-filter-period-in');
+      const lblOut = document.getElementById('label-filter-period-out');
+      const lblNet = document.getElementById('label-filter-period-net');
+
+      if (lblIn) lblIn.innerText = periodDesc;
+      if (lblOut) lblOut.innerText = periodDesc;
+      if (lblNet) lblNet.innerText = periodDesc;
     }
 
     function renderTable() {
       const tbody = document.getElementById('trx-table-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
-      const filterUser = document.getElementById('user-filter').value;
-      const list = (appData.transactions || []).filter(t => filterUser === 'ALL' || t.user.toLowerCase().includes(filterUser.toLowerCase()));
 
-      if (list.length === 0) return tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Belum ada transaksi.</td></tr>`;
+      const list = getFilteredTransactions();
+      const filterUser = document.getElementById('user-filter')?.value || 'ALL';
+      const filterMonth = document.getElementById('filter-month')?.value || 'ALL';
+      const filterYear = document.getElementById('filter-year')?.value || 'ALL';
+
+      let periodDesc = "Semua Periode";
+      if (filterMonth !== 'ALL' && filterYear !== 'ALL') {
+        const mName = INDONESIAN_MONTHS[parseInt(filterMonth, 10)] || filterMonth;
+        periodDesc = `${mName} ${filterYear}`;
+      } else if (filterMonth !== 'ALL') {
+        const mName = INDONESIAN_MONTHS[parseInt(filterMonth, 10)] || filterMonth;
+        periodDesc = `Bulan ${mName}`;
+      } else if (filterYear !== 'ALL') {
+        periodDesc = `Tahun ${filterYear}`;
+      }
+
+      const userDesc = filterUser === 'ALL' ? 'Semua Anggota' : filterUser;
+
+      const badgeEl = document.getElementById('trx-count-badge');
+      const descEl = document.getElementById('trx-filter-desc');
+      if (badgeEl) badgeEl.innerText = `${list.length} transaksi`;
+      if (descEl) descEl.innerText = `Periode: ${periodDesc} • Filter: ${userDesc}`;
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Tidak ada transaksi pada periode <b>${periodDesc}</b> (${userDesc}).</td></tr>`;
+        return;
+      }
 
       list.forEach(t => {
         const tr = document.createElement('tr');
@@ -1679,6 +2066,243 @@
         tbody.appendChild(tr);
       });
       lucide.createIcons();
+    }
+
+    // ==========================================
+    // DATA REKENING TERUPDATE DARI SHEET REKENING
+    // ==========================================
+    function getAccountMeta(name) {
+      const n = (name || '').toLowerCase();
+      if (n.includes('bca')) {
+        return { type: 'Bank BCA', icon: 'credit-card', bgColor: 'bg-blue-50', textColor: 'text-blue-600', badgeColor: 'bg-blue-100 text-blue-800', barColor: 'bg-blue-600' };
+      } else if (n.includes('seabank')) {
+        return { type: 'SeaBank (Dana Darurat)', icon: 'shield-check', bgColor: 'bg-amber-50', textColor: 'text-amber-600', badgeColor: 'bg-amber-100 text-amber-800', barColor: 'bg-amber-500' };
+      } else if (n.includes('mandiri')) {
+        return { type: 'Bank Mandiri', icon: 'credit-card', bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', badgeColor: 'bg-yellow-100 text-yellow-800', barColor: 'bg-yellow-600' };
+      } else if (n.includes('bri')) {
+        return { type: 'Bank BRI', icon: 'credit-card', bgColor: 'bg-blue-50', textColor: 'text-blue-700', badgeColor: 'bg-blue-100 text-blue-900', barColor: 'bg-blue-700' };
+      } else if (n.includes('bni')) {
+        return { type: 'Bank BNI', icon: 'credit-card', bgColor: 'bg-teal-50', textColor: 'text-teal-700', badgeColor: 'bg-teal-100 text-teal-800', barColor: 'bg-teal-600' };
+      } else if (n.includes('jago')) {
+        return { type: 'Bank Jago', icon: 'credit-card', bgColor: 'bg-orange-50', textColor: 'text-orange-600', badgeColor: 'bg-orange-100 text-orange-800', barColor: 'bg-orange-500' };
+      } else if (n.includes('gopay')) {
+        return { type: 'E-Wallet GoPay', icon: 'smartphone', bgColor: 'bg-sky-50', textColor: 'text-sky-600', badgeColor: 'bg-sky-100 text-sky-800', barColor: 'bg-sky-500' };
+      } else if (n.includes('ovo')) {
+        return { type: 'E-Wallet OVO', icon: 'smartphone', bgColor: 'bg-purple-50', textColor: 'text-purple-600', badgeColor: 'bg-purple-100 text-purple-800', barColor: 'bg-purple-600' };
+      } else if (n.includes('shopee') || n.includes('spay')) {
+        return { type: 'ShopeePay', icon: 'shopping-bag', bgColor: 'bg-orange-50', textColor: 'text-orange-600', badgeColor: 'bg-orange-100 text-orange-800', barColor: 'bg-orange-500' };
+      } else if (n.includes('dana')) {
+        return { type: 'E-Wallet DANA', icon: 'smartphone', bgColor: 'bg-blue-50', textColor: 'text-blue-500', badgeColor: 'bg-blue-100 text-blue-700', barColor: 'bg-blue-500' };
+      } else if (n.includes('cash') || n.includes('tunai') || n.includes('dompet')) {
+        return { type: 'Uang Tunai (Cash)', icon: 'wallet', bgColor: 'bg-emerald-50', textColor: 'text-emerald-600', badgeColor: 'bg-emerald-100 text-emerald-800', barColor: 'bg-emerald-600' };
+      } else if (n.includes('istri')) {
+        return { type: 'Cadangan Istri', icon: 'heart', bgColor: 'bg-pink-50', textColor: 'text-pink-600', badgeColor: 'bg-pink-100 text-pink-800', barColor: 'bg-pink-500' };
+      }
+      return { type: 'Rekening Bank / Kas', icon: 'landmark', bgColor: 'bg-indigo-50', textColor: 'text-indigo-600', badgeColor: 'bg-indigo-100 text-indigo-800', barColor: 'bg-indigo-600' };
+    }
+
+    function renderRekeningTab() {
+      const container = document.getElementById('rekening-cards-container');
+      const tableBody = document.getElementById('rekening-table-body');
+      const tableFoot = document.getElementById('rekening-table-foot');
+      if (!container || !tableBody) return;
+
+      const accounts = appData?.accounts || [];
+      const transactions = appData?.transactions || [];
+
+      const totalSaldo = accounts.reduce((sum, a) => sum + (parseFloat(a.saldo) || 0), 0);
+      const totalSaldoAwal = accounts.reduce((sum, a) => sum + (parseFloat(a.saldoAwal) || 0), 0);
+      const netPerubahan = totalSaldo - totalSaldoAwal;
+
+      // Update KPI
+      const elTotal = document.getElementById('rek-stat-total');
+      const elAwal = document.getElementById('rek-stat-awal');
+      const elPerubahan = document.getElementById('rek-stat-perubahan');
+      const elCount = document.getElementById('rek-stat-count');
+
+      if (elTotal) elTotal.innerText = formatIDR(totalSaldo);
+      if (elAwal) elAwal.innerText = formatIDR(totalSaldoAwal);
+      if (elPerubahan) {
+        elPerubahan.innerText = (netPerubahan >= 0 ? '+ ' : '- ') + formatIDR(Math.abs(netPerubahan));
+        elPerubahan.className = `text-2xl font-bold mt-1 ${netPerubahan >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+      }
+      if (elCount) elCount.innerText = `${accounts.length} Akun`;
+
+      // Hitung mutasi transaksi per akun
+      const accountStats = {};
+      accounts.forEach(a => {
+        accountStats[a.nama.toLowerCase().trim()] = {
+          nama: a.nama,
+          saldoAwal: parseFloat(a.saldoAwal) || 0,
+          saldo: parseFloat(a.saldo) || 0,
+          totalIn: 0,
+          totalOut: 0,
+          trxCount: 0
+        };
+      });
+
+      let grandTotalIn = 0;
+      let grandTotalOut = 0;
+
+      transactions.forEach(t => {
+        const key = (t.akun || '').toLowerCase().trim();
+        const nom = parseFloat(t.nominal) || 0;
+        if (accountStats[key]) {
+          if (t.tipe === 'IN') {
+            accountStats[key].totalIn += nom;
+            grandTotalIn += nom;
+          } else if (t.tipe === 'OUT') {
+            accountStats[key].totalOut += nom;
+            grandTotalOut += nom;
+          }
+          accountStats[key].trxCount += 1;
+        }
+      });
+
+      // Filter nama rekening dari input search
+      const searchTerm = (document.getElementById('search-rekening')?.value || '').toLowerCase().trim();
+      const filteredAccounts = accounts.filter(a => a.nama.toLowerCase().includes(searchTerm));
+
+      // Render Kartu Visual
+      container.innerHTML = '';
+      if (filteredAccounts.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-100">Tidak ada rekening yang sesuai dengan pencarian "${searchTerm}".</div>`;
+      } else {
+        filteredAccounts.forEach(a => {
+          const stats = accountStats[a.nama.toLowerCase().trim()] || { totalIn: 0, totalOut: 0, trxCount: 0 };
+          const porsi = totalSaldo > 0 ? ((a.saldo / totalSaldo) * 100).toFixed(1) : "0.0";
+          const meta = getAccountMeta(a.nama);
+
+          const card = document.createElement('div');
+          card.className = "bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition flex flex-col justify-between";
+          card.innerHTML = `
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-9 h-9 rounded-xl ${meta.bgColor} ${meta.textColor} flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
+                    <i data-lucide="${meta.icon}" class="w-4 h-4"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <h4 class="font-bold text-slate-900 text-sm leading-tight truncate">${a.nama}</h4>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold ${meta.badgeColor} inline-block">${meta.type}</span>
+                  </div>
+                </div>
+                <span class="text-xs font-bold text-slate-500 font-mono ml-2">${porsi}%</span>
+              </div>
+
+              <div class="mt-2">
+                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Saldo Terkini</span>
+                <h3 class="text-xl font-black text-slate-900 mt-0.5">${formatIDR(a.saldo)}</h3>
+              </div>
+
+              <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3 overflow-hidden">
+                <div class="h-1.5 rounded-full ${meta.barColor}" style="width: ${Math.min(Math.max(parseFloat(porsi) || 0, 0), 100)}%"></div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span class="text-[10px] text-slate-400 block font-medium">Saldo Awal:</span>
+                <span class="font-semibold text-slate-700">${formatIDR(a.saldoAwal)}</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] text-slate-400 block font-medium">Masuk (IN):</span>
+                <span class="font-semibold text-emerald-600">+ ${formatIDR(stats.totalIn)}</span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 block font-medium">Keluar (OUT):</span>
+                <span class="font-semibold text-rose-600">- ${formatIDR(stats.totalOut)}</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] text-slate-400 block font-medium">Aktivitas:</span>
+                <span class="font-semibold text-slate-600">${stats.trxCount} trx</span>
+              </div>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      // Render Tabel Rincian
+      tableBody.innerHTML = '';
+      if (filteredAccounts.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Belum ada data rekening yang sesuai.</td></tr>`;
+      } else {
+        filteredAccounts.forEach((a, idx) => {
+          const stats = accountStats[a.nama.toLowerCase().trim()] || { totalIn: 0, totalOut: 0, trxCount: 0 };
+          const porsi = totalSaldo > 0 ? ((a.saldo / totalSaldo) * 100).toFixed(1) : "0.0";
+          const meta = getAccountMeta(a.nama);
+
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-50/70 transition";
+          tr.innerHTML = `
+            <td class="p-3.5 text-slate-400 font-mono text-center">${idx + 1}</td>
+            <td class="p-3.5 font-bold text-slate-800 flex items-center gap-2.5">
+              <span class="w-7 h-7 rounded-lg ${meta.bgColor} ${meta.textColor} flex items-center justify-center text-xs flex-shrink-0">
+                <i data-lucide="${meta.icon}" class="w-3.5 h-3.5"></i>
+              </span>
+              <div>
+                <span>${a.nama}</span>
+                <span class="block text-[10px] text-slate-400 font-normal">${meta.type}</span>
+              </div>
+            </td>
+            <td class="p-3.5 text-right font-medium text-slate-600 whitespace-nowrap">${formatIDR(a.saldoAwal)}</td>
+            <td class="p-3.5 text-right font-semibold text-emerald-600 whitespace-nowrap">+ ${formatIDR(stats.totalIn)}</td>
+            <td class="p-3.5 text-right font-semibold text-rose-600 whitespace-nowrap">- ${formatIDR(stats.totalOut)}</td>
+            <td class="p-3.5 text-right font-bold text-slate-900 text-sm whitespace-nowrap">${formatIDR(a.saldo)}</td>
+            <td class="p-3.5 text-center">
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">${porsi}%</span>
+            </td>
+            <td class="p-3.5 text-center">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold ${a.saldo >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">
+                <span class="w-1.5 h-1.5 rounded-full ${a.saldo >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
+                ${a.saldo >= 0 ? 'Aktif' : 'Defisit'}
+              </span>
+            </td>
+          `;
+          tableBody.appendChild(tr);
+        });
+      }
+
+      // Render Footer Table
+      if (tableFoot) {
+        tableFoot.innerHTML = `
+          <tr>
+            <td colspan="2" class="p-3.5 text-slate-800 uppercase tracking-wider text-right">Total Keseluruhan:</td>
+            <td class="p-3.5 text-right font-bold text-slate-700 whitespace-nowrap">${formatIDR(totalSaldoAwal)}</td>
+            <td class="p-3.5 text-right font-bold text-emerald-600 whitespace-nowrap">+ ${formatIDR(grandTotalIn)}</td>
+            <td class="p-3.5 text-right font-bold text-rose-600 whitespace-nowrap">- ${formatIDR(grandTotalOut)}</td>
+            <td class="p-3.5 text-right font-extrabold text-slate-900 text-sm whitespace-nowrap">${formatIDR(totalSaldo)}</td>
+            <td class="p-3.5 text-center font-bold text-slate-700">100%</td>
+            <td></td>
+          </tr>
+        `;
+      }
+
+      // Update timestamp sinkronisasi
+      const lastSyncEl = document.getElementById('rekening-last-updated');
+      if (lastSyncEl) {
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        lastSyncEl.innerText = `Terakhir sinkron: ${timeStr} WIB`;
+      }
+
+      lucide.createIcons();
+    }
+
+    async function refreshRekeningTab() {
+      const btn = document.getElementById('btn-refresh-rekening');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin"></i> Sinkronisasi...`;
+        lucide.createIcons();
+      }
+      await fetchDashboardData();
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sinkronkan Rekening`;
+        lucide.createIcons();
+      }
     }
 
     async function submitTransaction(e) {
