@@ -576,40 +576,104 @@
           </div>
           <div>
             <label class="font-semibold text-slate-600">Tipe Transaksi</label>
-            <select id="form-type" onchange="updateCategoryOptions()" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-semibold">
+            <select id="form-type" onchange="updateCategoryOptions()" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-semibold text-indigo-700">
               <option value="OUT">Pengeluaran (OUT)</option>
-              <option value="IN">Pemasukan (IN)</option>
+              <option value="IN">Pemasukan / Gaji (IN)</option>
+              <option value="TRANSFER">Pindah Saldo / Ke Dana Darurat (TRANSFER)</option>
             </select>
           </div>
         </div>
         <div>
           <label class="font-semibold text-slate-600">Keterangan Transaksi</label>
-          <input type="text" id="form-desc" placeholder="Contoh: Belanja beras & minyak / Ngopi di Starbucks" required class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white">
+          <input type="text" id="form-desc" placeholder="Contoh: Gaji Maulana / Belanja Bulanan / Sisihkan ke SeaBank" required class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white" oninput="checkIfSalaryInput()">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="font-semibold text-slate-600">Nominal (Rp)</label>
-            <input type="number" id="form-nominal" placeholder="0" required class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-bold">
+            <input type="number" id="form-nominal" placeholder="0" required class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-bold" oninput="onFormNominalChange()">
           </div>
-          <div>
+          <div id="wrapper-form-cat">
             <label class="font-semibold text-slate-600">Kategori</label>
             <select id="form-cat" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-medium">
               <!-- Diisi otomatis oleh updateCategoryOptions() -->
             </select>
           </div>
         </div>
-        <div>
-          <label class="font-semibold text-slate-600">Akun / Rekening</label>
-          <select id="form-account" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-medium">
-            <option value="Cash">Cash / Tunai</option>
-            <option value="BCA">BCA</option>
-            <option value="SeaBank">SeaBank</option>
-            <option value="Gopay">GoPay</option>
-          </select>
+
+        <!-- PILIHAN REKENING ASAL & TUJUAN -->
+        <div class="space-y-2.5" id="wrapper-accounts-row">
+          <div>
+            <label id="lbl-form-account" class="font-semibold text-slate-600">Akun / Rekening</label>
+            <select id="form-account" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-medium">
+              <option value="Cash">Cash / Tunai</option>
+              <option value="BCA">BCA</option>
+              <option value="SeaBank">SeaBank</option>
+              <option value="Gopay">GoPay</option>
+            </select>
+          </div>
+          <div id="wrapper-form-to-account" class="hidden">
+            <label class="font-semibold text-slate-600 flex items-center gap-1.5 text-amber-800">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-600"></i> Rekening Tujuan (Dana Darurat / Lainnya)
+            </label>
+            <select id="form-to-account" class="w-full mt-1 p-2.5 border border-amber-300 rounded-xl text-xs bg-amber-50/60 focus:bg-white font-bold text-amber-900">
+              <option value="SeaBank">SeaBank (Dana Darurat)</option>
+              <option value="BCA">BCA</option>
+              <option value="Cash">Cash / Tunai</option>
+              <option value="Gopay">GoPay</option>
+            </select>
+          </div>
         </div>
+
+        <!-- OPSI KOTAK: LANGSUNG SISIHKAN DARI GAJI KE SEABANK (MUNCUL PADA TIPE IN) -->
+        <div id="split-emergency-box" class="hidden p-3.5 bg-gradient-to-r from-amber-50 to-emerald-50 border border-amber-200/80 rounded-2xl space-y-2.5 transition">
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-800 text-xs select-none">
+              <input type="checkbox" id="check-split-emergency" onchange="toggleSplitEmergencyInputs()" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer">
+              <span class="flex items-center gap-1.5 text-amber-900">
+                <i data-lucide="shield-check" class="w-4 h-4 text-amber-600"></i>
+                Sisihkan ke Dana Darurat (SeaBank)
+              </span>
+            </label>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">Auto Transfer</span>
+          </div>
+
+          <div id="split-emergency-inputs" class="hidden space-y-2 pt-2 border-t border-amber-200/60">
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+              Sebagian dari uang gaji yang dicatat akan otomatis ditransfer ke rekening <b class="text-amber-800">SeaBank</b> sebagai tabungan dana darurat keluarga.
+            </p>
+            
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-[10px] font-bold text-slate-500">Porsi:</span>
+              <button type="button" onclick="setSplitPercentage(10)" class="px-2 py-1 bg-white hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-[10px] font-bold transition shadow-xs">10%</button>
+              <button type="button" onclick="setSplitPercentage(15)" class="px-2 py-1 bg-white hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-[10px] font-bold transition shadow-xs">15%</button>
+              <button type="button" onclick="setSplitPercentage(20)" class="px-2 py-1 bg-white hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-[10px] font-bold transition shadow-xs">20%</button>
+              <button type="button" onclick="setSplitPercentage(30)" class="px-2 py-1 bg-white hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-[10px] font-bold transition shadow-xs">30%</button>
+              <span id="split-calc-hint" class="text-[11px] text-emerald-700 font-bold ml-auto font-mono"></span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] font-bold text-slate-600 block">Nominal ke SeaBank (Rp)</label>
+                <input type="number" id="split-nominal" placeholder="0" class="w-full mt-0.5 p-2 border border-amber-300 rounded-xl text-xs bg-white font-bold text-amber-900 focus:ring-2 focus:ring-amber-500" oninput="updateSplitHint()">
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-600 block">Rekening Tujuan</label>
+                <select id="split-target-account" class="w-full mt-0.5 p-2 border border-amber-300 rounded-xl text-xs bg-white font-bold text-amber-900">
+                  <option value="SeaBank">SeaBank (Dana Darurat)</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="split-summary-text" class="text-[10px] font-semibold text-slate-600 bg-white/80 p-2 rounded-lg border border-amber-100 hidden">
+            </div>
+          </div>
+        </div>
+
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
           <button type="button" onclick="closeModalTrx()" class="px-4 py-2 border rounded-xl hover:bg-slate-50 font-medium">Batal</button>
-          <button type="submit" id="btn-submit-trx" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">Simpan Transaksi</button>
+          <button type="submit" id="btn-submit-trx" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md flex items-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i> Simpan Transaksi
+          </button>
         </div>
       </form>
     </div>
@@ -1451,6 +1515,19 @@
             <option value="Asuransi">Asuransi</option>
           </optgroup>
         `;
+      } else if (type === 'TRANSFER') {
+        return `
+          <optgroup label="🛡️ Dana Darurat & Tabungan">
+            <option value="Simpanan Dana Darurat">Alokasi Dana Darurat (SeaBank)</option>
+            <option value="Tabungan Masa Depan">Tabungan Masa Depan</option>
+            <option value="Investasi">Investasi / Emas / Saham</option>
+          </optgroup>
+          <optgroup label="⇄ Mutasi Kas & Rekening">
+            <option value="Transfer">Transfer Antar Rekening</option>
+            <option value="Tarik Tunai">Tarik Tunai (Bank -> Tunai)</option>
+            <option value="Setor Tunai">Setor Tunai (Tunai -> Bank)</option>
+          </optgroup>
+        `;
       } else {
         return `
           <optgroup label="💵 Pemasukan & Pendapatan">
@@ -1469,6 +1546,103 @@
       const type = document.getElementById('form-type') ? document.getElementById('form-type').value : 'OUT';
       const catSelect = document.getElementById('form-cat');
       if (catSelect) catSelect.innerHTML = getCategoryOptionsHtml(type);
+
+      const splitBox = document.getElementById('split-emergency-box');
+      const toAccRow = document.getElementById('wrapper-form-to-account');
+      const lblAccount = document.getElementById('lbl-form-account');
+
+      if (type === 'IN') {
+        if (splitBox) splitBox.classList.remove('hidden');
+        if (toAccRow) toAccRow.classList.add('hidden');
+        if (lblAccount) lblAccount.innerText = "Akun Rekening Masuk (Penerima Gaji)";
+      } else if (type === 'TRANSFER') {
+        if (splitBox) splitBox.classList.add('hidden');
+        if (toAccRow) toAccRow.classList.remove('hidden');
+        if (lblAccount) lblAccount.innerText = "Dari Rekening (Asal / Sumber Dana)";
+        // Set default tujuan ke SeaBank jika ada
+        const toAccSelect = document.getElementById('form-to-account');
+        if (toAccSelect) {
+          const seaBankOpt = Array.from(toAccSelect.options).find(o => o.value.toLowerCase().includes('seabank'));
+          if (seaBankOpt) toAccSelect.value = seaBankOpt.value;
+        }
+      } else {
+        if (splitBox) splitBox.classList.add('hidden');
+        if (toAccRow) toAccRow.classList.add('hidden');
+        if (lblAccount) lblAccount.innerText = "Akun / Rekening Pembayaran";
+      }
+      lucide.createIcons();
+    }
+
+    function toggleSplitEmergencyInputs() {
+      const chk = document.getElementById('check-split-emergency');
+      const container = document.getElementById('split-emergency-inputs');
+      if (chk && container) {
+        if (chk.checked) {
+          container.classList.remove('hidden');
+          const nominal = parseFloat(document.getElementById('form-nominal')?.value) || 0;
+          if (nominal > 0 && !document.getElementById('split-nominal').value) {
+            setSplitPercentage(15);
+          }
+        } else {
+          container.classList.add('hidden');
+        }
+      }
+      lucide.createIcons();
+    }
+
+    function setSplitPercentage(pct) {
+      const nominal = parseFloat(document.getElementById('form-nominal')?.value) || 0;
+      const splitInput = document.getElementById('split-nominal');
+      if (splitInput) {
+        const val = Math.round(nominal * (pct / 100));
+        splitInput.value = val > 0 ? val : '';
+        updateSplitHint(pct);
+      }
+    }
+
+    function updateSplitHint(explicitPct) {
+      const nominal = parseFloat(document.getElementById('form-nominal')?.value) || 0;
+      const splitVal = parseFloat(document.getElementById('split-nominal')?.value) || 0;
+      const hintEl = document.getElementById('split-calc-hint');
+      const summaryEl = document.getElementById('split-summary-text');
+
+      if (!hintEl) return;
+
+      if (nominal > 0 && splitVal > 0) {
+        const pct = explicitPct || Math.round((splitVal / nominal) * 100);
+        const sisa = Math.max(nominal - splitVal, 0);
+        hintEl.innerText = `${pct}% (${formatIDR(splitVal)})`;
+
+        if (summaryEl) {
+          summaryEl.classList.remove('hidden');
+          summaryEl.innerHTML = `
+            <span>💡 <b>Simulasi Alokasi:</b> Total Gaji: Rp ${formatIDR(nominal)} &bull; <b class="text-amber-800">${formatIDR(splitVal)}</b> pindah ke SeaBank (Dana Darurat) &bull; Sisa di rekening utama: <b class="text-emerald-700">${formatIDR(sisa)}</b></span>
+          `;
+        }
+      } else {
+        hintEl.innerText = '';
+        if (summaryEl) summaryEl.classList.add('hidden');
+      }
+    }
+
+    function onFormNominalChange() {
+      const chk = document.getElementById('check-split-emergency');
+      if (chk && chk.checked) {
+        updateSplitHint();
+      }
+    }
+
+    function checkIfSalaryInput() {
+      const desc = (document.getElementById('form-desc')?.value || '').toLowerCase();
+      const type = document.getElementById('form-type')?.value;
+      const chk = document.getElementById('check-split-emergency');
+
+      if (type === 'IN' && (desc.includes('gaji') || desc.includes('salary') || desc.includes('pendapatan'))) {
+        if (chk && !chk.checked) {
+          chk.checked = true;
+          toggleSplitEmergencyInputs();
+        }
+      }
     }
 
     function updateEditCategoryOptions(selectedVal) {
@@ -1910,7 +2084,7 @@
       const accounts = appData?.accounts || [];
       if (accounts.length === 0) return;
 
-      const targetSelectIds = ['form-account', 'edit-form-account', 'rutin-form-akun', 'edit-rutin-acc'];
+      const targetSelectIds = ['form-account', 'form-to-account', 'split-target-account', 'edit-form-account', 'rutin-form-akun', 'edit-rutin-acc'];
       targetSelectIds.forEach(id => {
         const sel = document.getElementById(id);
         if (!sel) return;
@@ -1920,7 +2094,11 @@
           const opt = document.createElement('option');
           opt.value = a.nama;
           opt.innerText = a.nama;
-          if (a.nama === currentVal) opt.selected = true;
+          if ((id === 'form-to-account' || id === 'split-target-account') && a.nama.toLowerCase().includes('seabank')) {
+            opt.selected = true;
+          } else if (a.nama === currentVal) {
+            opt.selected = true;
+          }
           sel.appendChild(opt);
         });
       });
@@ -2050,14 +2228,16 @@
 
       list.forEach(t => {
         const tr = document.createElement('tr');
-        const color = t.tipe === 'OUT' ? 'text-rose-600' : 'text-emerald-600';
+        const isTransfer = t.tipe === 'TRANSFER';
+        const color = isTransfer ? 'text-indigo-600' : (t.tipe === 'OUT' ? 'text-rose-600' : 'text-emerald-600');
+        const sign = isTransfer ? '⇄ ' : (t.tipe === 'OUT' ? '- ' : '+ ');
         tr.innerHTML = `
           <td class="p-3.5 whitespace-nowrap text-slate-500">${t.tanggal}</td>
-          <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700">${t.user}</span></td>
+          <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ${isTransfer ? 'bg-amber-50 text-amber-700 border border-amber-200/60' : 'bg-indigo-50 text-indigo-700'}">${t.user}</span></td>
           <td class="p-3.5 font-medium text-slate-800">${t.keterangan}</td>
-          <td class="p-3.5"><span class="px-2 py-0.5 border rounded-md text-[11px] bg-slate-50">${t.kategori}</span></td>
-          <td class="p-3.5 text-slate-500">${t.akun}</td>
-          <td class="p-3.5 text-right font-semibold ${color} whitespace-nowrap">${t.tipe === 'OUT' ? '-' : '+'} ${formatIDR(t.nominal)}</td>
+          <td class="p-3.5"><span class="px-2 py-0.5 border rounded-md text-[11px] ${isTransfer ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-50'}">${t.kategori || 'Transfer'}</span></td>
+          <td class="p-3.5 ${isTransfer ? 'font-semibold text-indigo-700' : 'text-slate-500'}">${t.akun}</td>
+          <td class="p-3.5 text-right font-bold ${color} whitespace-nowrap">${sign}${formatIDR(t.nominal)}</td>
           <td class="p-3.5 text-center whitespace-nowrap">
             <button onclick="openEditTrx('${t.id || ''}', ${t.rowIndex || 'null'})" class="text-indigo-600 hover:text-indigo-900 font-semibold text-xs mr-2 transition">Edit</button>
             <button onclick="deleteTrx('${t.id || ''}', ${t.rowIndex || 'null'})" class="text-rose-500 hover:text-rose-700 font-semibold text-xs transition">Hapus</button>
@@ -2311,19 +2491,73 @@
       btn.innerText = "Menyimpan...";
       btn.disabled = true;
 
-      const payload = {
-        action: "addTransaction",
-        tanggal: document.getElementById('form-date').value,
-        tipe: document.getElementById('form-type').value,
-        keterangan: document.getElementById('form-desc').value,
-        nominal: document.getElementById('form-nominal').value,
-        kategori: document.getElementById('form-cat').value,
-        akun: document.getElementById('form-account').value,
-        user: currentUser.name
-      };
+      const trxType = document.getElementById('form-type').value;
+      const tDate = document.getElementById('form-date').value;
+      const tDesc = document.getElementById('form-desc').value;
+      const tNominal = parseFloat(document.getElementById('form-nominal').value) || 0;
+      const tCat = document.getElementById('form-cat')?.value || 'Umum';
+      const tAccount = document.getElementById('form-account').value;
 
       try {
-        await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
+        if (trxType === "TRANSFER") {
+          const toAccount = document.getElementById('form-to-account').value;
+          if (tAccount === toAccount) {
+            alert("Rekening asal dan rekening tujuan tidak boleh sama.");
+            btn.innerText = "Simpan Transaksi";
+            btn.disabled = false;
+            return;
+          }
+
+          const payload = {
+            action: "addTransfer",
+            tanggal: tDate,
+            fromAccount: tAccount,
+            toAccount: toAccount,
+            nominal: tNominal,
+            keterangan: tDesc || `Pindah Saldo ${tAccount} -> ${toAccount}`,
+            user: currentUser.name
+          };
+          await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
+
+        } else {
+          // Transaksi IN / OUT biasa
+          const payload = {
+            action: "addTransaction",
+            tanggal: tDate,
+            tipe: trxType,
+            keterangan: tDesc,
+            nominal: tNominal,
+            kategori: tCat,
+            akun: tAccount,
+            user: currentUser.name
+          };
+          await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
+
+          // Cek jika mencatat Gaji (IN) dan mencentang sisihkan sebagian ke SeaBank
+          const checkSplit = document.getElementById('check-split-emergency');
+          if (trxType === "IN" && checkSplit && checkSplit.checked) {
+            const splitNominal = parseFloat(document.getElementById('split-nominal').value) || 0;
+            const splitTargetAccount = document.getElementById('split-target-account').value || "SeaBank";
+
+            if (splitNominal > 0) {
+              if (splitNominal > tNominal) {
+                alert("Nominal alokasi dana darurat tidak boleh melebihi nominal pemasukan gaji.");
+              } else {
+                const transferPayload = {
+                  action: "addTransfer",
+                  tanggal: tDate,
+                  fromAccount: tAccount,
+                  toAccount: splitTargetAccount,
+                  nominal: splitNominal,
+                  keterangan: `Alokasi Dana Darurat dari ${tDesc || 'Gaji'}`,
+                  user: currentUser.name
+                };
+                await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(transferPayload) });
+              }
+            }
+          }
+        }
+
         closeModalTrx();
         fetchDashboardData();
       } catch (err) {
@@ -2336,6 +2570,20 @@
 
     function openModalTrx() { 
       document.getElementById('form-date').valueAsDate = new Date(); 
+      const formType = document.getElementById('form-type');
+      if (formType) formType.value = 'OUT';
+      
+      const chk = document.getElementById('check-split-emergency');
+      if (chk) chk.checked = false;
+      const splitInputs = document.getElementById('split-emergency-inputs');
+      if (splitInputs) splitInputs.classList.add('hidden');
+      const splitNom = document.getElementById('split-nominal');
+      if (splitNom) splitNom.value = '';
+      const splitHint = document.getElementById('split-calc-hint');
+      if (splitHint) splitHint.innerText = '';
+      const splitSummary = document.getElementById('split-summary-text');
+      if (splitSummary) splitSummary.classList.add('hidden');
+
       updateCategoryOptions();
       document.getElementById('modal-trx').classList.remove('hidden'); 
       document.getElementById('modal-trx').classList.add('flex'); 
