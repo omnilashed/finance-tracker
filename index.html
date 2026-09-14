@@ -146,16 +146,32 @@
                 <h3 class="text-lg font-bold text-slate-900">Perencana Anggaran Berbasis Gaji Real</h3>
                 <span id="auto-salary-badge" class="hidden px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Tersinkron Otomatis</span>
               </div>
-              <p class="text-xs text-slate-500 mt-0.5">Gaji dapat terdeteksi otomatis dari transaksi masuk atau dimasukkan manual.</p>
+              <p class="text-xs text-slate-500 mt-0.5">Batas anggaran dapat disimpan per bulan dan otomatis terkalibrasi saat ada gaji baru.</p>
             </div>
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-              <button onclick="autoDetectSalary()" class="px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border border-indigo-200">
-                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Ambil Gaji Bulan Ini
-              </button>
+            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              <div class="flex items-center gap-2">
+                <label class="text-xs font-semibold text-slate-600 whitespace-nowrap">Periode:</label>
+                <select id="planner-period-select" onchange="onPlannerPeriodChange(this.value)" class="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold bg-slate-50 text-indigo-700 focus:bg-white focus:ring-2 focus:ring-indigo-500">
+                  <!-- Diisi otomatis oleh updatePlannerPeriodOptions() -->
+                </select>
+              </div>
               <div class="relative">
                 <span class="absolute left-3 top-2.5 text-xs text-slate-400 font-bold">Rp</span>
-                <input type="number" id="input-salary" placeholder="Gaji Bulanan" class="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-indigo-500 w-full sm:w-56" oninput="calculateCustomBudget()">
+                <input type="number" id="input-salary" placeholder="Total Gaji Acuan" class="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-indigo-500 w-full sm:w-48" oninput="calculateCustomBudget()">
               </div>
+            </div>
+          </div>
+
+          <!-- PANEL RINCIAN SUMBER GAJI TERDETEKSI -->
+          <div id="salary-sources-box" class="pt-3 border-t border-slate-100 space-y-2">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
+              <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <i data-lucide="wallet" class="w-4 h-4 text-indigo-600"></i> Sumber Catatan Gaji Masuk (Pilih sebagai acuan):
+              </span>
+              <span id="salary-sources-summary" class="text-[11px] text-slate-500 font-medium">Memeriksa catatan gaji...</span>
+            </div>
+            <div id="salary-sources-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div class="col-span-full p-3 bg-slate-50 rounded-xl text-slate-400 text-xs italic">Memuat sumber gaji...</div>
             </div>
           </div>
 
@@ -697,35 +713,170 @@
       activeBtn.classList.add('active');
 
       if (tabId === 'tab-planner') {
-        autoDetectSalary();
+        updatePlannerPeriodOptions();
+        renderSalarySources();
         renderBudgetPlannerList();
       }
     }
 
     // ==========================================
-    // BUDGETING FLEKSIBEL & AUTO SYNC GAJI
+    // BUDGETING FLEKSIBEL, MULTI-PERIODE & AUTO SYNC GAJI
     // ==========================================
+    let selectedPlannerPeriod = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
 
-    function autoDetectSalary() {
-      if (!appData || !appData.transactions) return;
+    function getPeriodLabel(periodStr) {
+      if (!periodStr) return "";
+      const parts = periodStr.split("-");
+      if (parts.length !== 2) return periodStr;
+      const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      const mIndex = parseInt(parts[1], 10) - 1;
+      const mName = monthNames[mIndex] || parts[1];
+      return `${mName} ${parts[0]}`;
+    }
+
+    function updatePlannerPeriodOptions() {
+      const select = document.getElementById('planner-period-select');
+      if (!select) return;
+
       const now = new Date();
-      const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-      // Cari pemasukan dengan kategori 'Pendapatan' atau keterangan 'gaji' pada bulan ini
-      let detectedSalary = 0;
-      appData.transactions.forEach(t => {
-        if (t.tipe === 'IN' && (t.kategori.toLowerCase() === 'pendapatan' || t.keterangan.toLowerCase().includes('gaji'))) {
-          if (t.tanggal.startsWith(currentYearMonth)) {
-            detectedSalary += t.nominal;
-          }
-        }
+      // Buat list periode: 3 bulan lalu, bulan ini, bulan depan
+      const periodSet = new Set();
+      periodSet.add(currentYM);
+
+      // Bulan depan
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      periodSet.add(`${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`);
+
+      // 3 Bulan sebelumnya
+      for (let i = 1; i <= 3; i++) {
+        const prev = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        periodSet.add(`${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`);
+      }
+
+      // Tambahkan periode dari database jika ada
+      (appData?.budgets || []).forEach(b => { if (b.periode) periodSet.add(b.periode); });
+      (appData?.salarySources || []).forEach(s => { if (s.periode) periodSet.add(s.periode); });
+
+      const sortedPeriods = Array.from(periodSet).sort();
+
+      select.innerHTML = '';
+      sortedPeriods.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        const isCurrent = (p === currentYM);
+        opt.innerText = `${getPeriodLabel(p)}${isCurrent ? ' (Bulan Ini)' : ''}`;
+        if (p === selectedPlannerPeriod) opt.selected = true;
+        select.appendChild(opt);
       });
 
-      if (detectedSalary > 0) {
-        document.getElementById('input-salary').value = detectedSalary;
-        document.getElementById('auto-salary-badge').classList.remove('hidden');
-        calculateCustomBudget();
+      const saveLabel = document.getElementById('save-period-label');
+      if (saveLabel) saveLabel.innerText = getPeriodLabel(selectedPlannerPeriod);
+    }
+
+    function onPlannerPeriodChange(val) {
+      selectedPlannerPeriod = val;
+      const saveLabel = document.getElementById('save-period-label');
+      if (saveLabel) saveLabel.innerText = getPeriodLabel(selectedPlannerPeriod);
+
+      // Cek apakah ada budget tersimpan di sheet untuk periode ini
+      const savedBudgets = (appData?.budgets || []).filter(b => b.periode === selectedPlannerPeriod);
+      if (savedBudgets.length > 0) {
+        const needsItem = savedBudgets.find(b => b.kategori === "Kebutuhan Pokok");
+        const debtItem = savedBudgets.find(b => b.kategori === "Cicilan Utang");
+        const wantsItem = savedBudgets.find(b => b.kategori === "Gaya Hidup & Hiburan");
+        const savingsItem = savedBudgets.find(b => b.kategori === "Tabungan & Darurat");
+
+        if (needsItem && needsItem.persen > 0) {
+          applyPreset(
+            needsItem.persen || 50,
+            debtItem ? (debtItem.persen || 0) : 0,
+            wantsItem ? (wantsItem.persen || 30) : 30,
+            savingsItem ? (savingsItem.persen || 20) : 20
+          );
+        }
       }
+
+      renderSalarySources();
+      renderBudgetPlannerList();
+    }
+
+    function renderSalarySources() {
+      const container = document.getElementById('salary-sources-list');
+      const summaryEl = document.getElementById('salary-sources-summary');
+      const badgeAuto = document.getElementById('auto-salary-badge');
+      if (!container) return;
+
+      const allTrx = (appData && appData.transactions) ? appData.transactions : [];
+      // Filter transaksi pemasukan gaji/pendapatan pada selectedPlannerPeriod
+      const detected = allTrx.filter(t => {
+        if (t.tipe !== 'IN' || !t.tanggal || !t.tanggal.startsWith(selectedPlannerPeriod)) return false;
+        const kat = (t.kategori || '').toLowerCase();
+        const ket = (t.keterangan || '').toLowerCase();
+        return kat.includes('gaji') || kat.includes('pendapatan') || 
+               kat.includes('dana tambahan') || kat.includes('uang sampingan') || 
+               ket.includes('gaji');
+      });
+
+      if (detected.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full p-3 bg-slate-50/70 border border-slate-100 rounded-xl text-slate-400 text-xs italic flex items-center gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-slate-300"></i>
+            <span>Belum ada catatan transaksi gaji di periode <b>${getPeriodLabel(selectedPlannerPeriod)}</b>. Anda dapat memasukkan nominal gaji secara manual di atas.</span>
+          </div>
+        `;
+        if (summaryEl) summaryEl.innerText = "0 catatan gaji ditemukan";
+        if (badgeAuto) badgeAuto.classList.add('hidden');
+        lucide.createIcons();
+        return;
+      }
+
+      let totalSalaryFound = 0;
+      container.innerHTML = '';
+
+      detected.forEach((item) => {
+        totalSalaryFound += item.nominal;
+        const itemEl = document.createElement('label');
+        itemEl.className = "flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-indigo-50/30 transition cursor-pointer shadow-sm";
+        itemEl.innerHTML = `
+          <div class="flex items-center gap-2.5 min-w-0">
+            <input type="checkbox" class="salary-source-check rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer" data-nominal="${item.nominal}" checked onchange="onSalarySourceCheckChange()">
+            <div class="truncate">
+              <span class="font-bold text-slate-800 text-xs">${item.user || 'User'}</span>: <span class="text-slate-600 text-xs font-medium">${item.keterangan}</span>
+              <span class="block text-[10px] text-slate-400 font-mono">${item.tanggal} &bull; ${item.akun}</span>
+            </div>
+          </div>
+          <span class="font-bold text-emerald-600 text-xs whitespace-nowrap ml-2">+ ${formatIDR(item.nominal)}</span>
+        `;
+        container.appendChild(itemEl);
+      });
+
+      if (summaryEl) {
+        summaryEl.innerHTML = `<span class="text-indigo-700 font-bold">${detected.length} catatan gaji</span> total: <b class="text-emerald-600">${formatIDR(totalSalaryFound)}</b>`;
+      }
+      if (badgeAuto) badgeAuto.classList.remove('hidden');
+
+      // Update input salary otomatis sesuai total gaji tercentang
+      document.getElementById('input-salary').value = totalSalaryFound;
+      calculateCustomBudget();
+      lucide.createIcons();
+    }
+
+    function onSalarySourceCheckChange() {
+      const checks = document.querySelectorAll('.salary-source-check');
+      let total = 0;
+      checks.forEach(c => {
+        if (c.checked) {
+          total += parseFloat(c.getAttribute('data-nominal')) || 0;
+        }
+      });
+      document.getElementById('input-salary').value = total;
+      calculateCustomBudget();
+    }
+
+    function autoDetectSalary() {
+      renderSalarySources();
     }
 
     function toggleDebtSection() {
@@ -846,7 +997,7 @@
       renderBudgetPlannerList();
     }
 
-    // SIMPAN BUDGET KE SHEET SPREADSHEET
+    // SIMPAN BUDGET KE SHEET SPREADSHEET (SESUAI PERIODE TERPILIH)
     async function saveBudgetToSpreadsheet() {
       const salary = parseFloat(document.getElementById('input-salary').value) || 0;
       if (salary <= 0) return alert("Masukkan nominal gaji terlebih dahulu.");
@@ -862,7 +1013,8 @@
 
       const payload = {
         action: "saveMonthlyBudget",
-        period: new Date().toISOString().slice(0, 7),
+        period: selectedPlannerPeriod,
+        salary: salary,
         items: [
           { kategori: "Kebutuhan Pokok", persen: document.getElementById('slider-needs').value, limit: needsLimit, terpakai: 0 },
           { kategori: "Cicilan Utang", persen: document.getElementById('slider-debt').value, limit: debtLimit, terpakai: 0 },
@@ -875,7 +1027,7 @@
         const res = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
         const data = await res.json();
         if (data.success) {
-          alert("✅ Alokasi Budget Berhasil Disimpan ke Google Spreadsheet!");
+          alert(`✅ Alokasi Budget Periode ${getPeriodLabel(selectedPlannerPeriod)} Berhasil Disimpan ke Google Spreadsheet!`);
           fetchDashboardData();
         } else {
           alert("Gagal menyimpan: " + data.message);
@@ -1161,9 +1313,8 @@
       if (!container) return;
 
       const now = new Date();
-      const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-      const currentMonthText = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+      const targetPeriod = selectedPlannerPeriod || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const currentMonthText = getPeriodLabel(targetPeriod);
       
       const badgeMonth = document.getElementById('budget-current-month');
       if (badgeMonth) badgeMonth.innerText = `Periode: ${currentMonthText}`;
@@ -1216,19 +1367,22 @@
         }
       ];
 
-      // Ambil transaksi bulan ini
+      // Ambil transaksi periode ini
       const allTrx = (appData && appData.transactions) ? appData.transactions : [];
-      const currentMonthExpenses = allTrx.filter(t => t.tipe === 'OUT' && t.tanggal && t.tanggal.startsWith(currentYearMonth));
+      const currentMonthExpenses = allTrx.filter(t => t.tipe === 'OUT' && t.tanggal && t.tanggal.startsWith(targetPeriod));
 
-      // Ambil data budget dari sheet Budget
+      // Ambil data budget dari sheet Budget untuk targetPeriod
       const sheetBudgets = (appData && appData.budgets) ? appData.budgets : [];
       const salary = parseFloat(document.getElementById('input-salary')?.value) || 0;
 
       container.innerHTML = '';
 
       budgetDefinitions.forEach((def) => {
-        // Cari data limit dari Sheet Budget
-        const sheetItem = sheetBudgets.find(b => String(b.kategori).trim().toLowerCase() === def.key.toLowerCase());
+        // Cari data limit dari Sheet Budget untuk periode targetPeriod
+        const sheetItem = sheetBudgets.find(b => 
+          (b.periode === targetPeriod || (!b.periode && targetPeriod === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)) && 
+          String(b.kategori).trim().toLowerCase() === def.key.toLowerCase()
+        );
         
         let limit = 0;
         if (sheetItem && sheetItem.limit > 0) {
@@ -1479,6 +1633,8 @@
           updateStats();
           renderTable();
           renderRutinTable();
+          updatePlannerPeriodOptions();
+          renderSalarySources();
           renderBudgetPlannerList();
         }
       } catch (err) { console.error(err); }
