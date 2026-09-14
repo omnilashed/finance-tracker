@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MegulFin - Perencana & Database Keuangan</title>
+  <title>FamilyFin - Perencana & Database Keuangan</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
@@ -490,6 +490,88 @@
     </div>
   </div>
 
+  <!-- MODAL EDIT RUTIN -->
+  <div id="modal-edit-rutin" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <i data-lucide="edit" class="w-4 h-4 text-indigo-600"></i> Edit Tagihan Rutin Bulanan
+        </h3>
+        <button type="button" onclick="closeModalEditRutin()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form onsubmit="submitEditRutin(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="edit-rutin-id">
+        <div>
+          <span class="text-[10px] font-mono text-slate-400 block mb-1" id="edit-rutin-id-label">ID: -</span>
+          <label class="font-semibold text-slate-600">Keterangan Tagihan</label>
+          <input type="text" id="edit-rutin-desc" required class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-slate-600">Nominal Tagihan (Rp)</label>
+            <input type="number" id="edit-rutin-nominal" required class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-bold">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-600">Tanggal Eksekusi (Tgl 1-31)</label>
+            <input type="number" id="edit-rutin-date" min="1" max="31" required class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-bold">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-slate-600">Pos / Kategori</label>
+            <select id="edit-rutin-cat" class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-medium">
+              <optgroup label="💳 Cicilan Utang">
+                <option value="Cicilan Utang">Cicilan Utang (Umum)</option>
+                <option value="Cicilan KPR">Cicilan KPR / Rumah</option>
+                <option value="Cicilan Kendaraan">Cicilan Kendaraan (Motor / Mobil)</option>
+                <option value="Paylater & Pinjaman">Paylater & Pinjaman</option>
+                <option value="Kartu Kredit">Kartu Kredit</option>
+              </optgroup>
+              <optgroup label="🏠 Kebutuhan Pokok">
+                <option value="Tagihan & Utilitas">Tagihan Listrik / Air / WiFi</option>
+                <option value="Belanja Bulanan">Belanja Bulanan Pokok</option>
+                <option value="Pendidikan">Pendidikan & SPP</option>
+                <option value="Konsumsi">Konsumsi Rutin</option>
+                <option value="Transportasi & BBM">Transportasi & BBM</option>
+              </optgroup>
+              <optgroup label="☕ Gaya Hidup & Hiburan">
+                <option value="Hiburan & Streaming">Langganan Streaming (Netflix, Spotify)</option>
+                <option value="Gaya Hidup & Hiburan">Gaya Hidup & Hiburan</option>
+              </optgroup>
+              <optgroup label="🛡️ Tabungan & Darurat">
+                <option value="Simpanan Dana Darurat">Simpanan Dana Darurat (SeaBank)</option>
+                <option value="Tabungan Masa Depan">Tabungan Masa Depan</option>
+                <option value="Asuransi">Asuransi Rutin</option>
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <label class="font-semibold text-slate-600">Rekening Pembayaran</label>
+            <select id="edit-rutin-acc" class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-medium">
+              <option value="Cash">Cash / Tunai</option>
+              <option value="BCA">BCA</option>
+              <option value="SeaBank">SeaBank</option>
+              <option value="Gopay">GoPay</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="font-semibold text-slate-600">Status Rutin</label>
+          <select id="edit-rutin-status" class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-semibold">
+            <option value="AKTIF">AKTIF (Otomatis Dijalankan)</option>
+            <option value="NONAKTIF">NONAKTIF (Dijeda Sementara)</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModalEditRutin()" class="px-4 py-2 border rounded-xl hover:bg-slate-50 font-medium">Batal</button>
+          <button type="submit" id="btn-submit-edit-rutin" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     let appData = null;
     let currentUser = JSON.parse(localStorage.getItem('user_session') || 'null');
@@ -820,6 +902,68 @@
         await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify({ action: "deleteRutin", id }) });
         fetchDashboardData();
       } catch (err) { alert("Error: " + err.message); }
+    }
+
+    function openEditRutin(id) {
+      const r = (appData.rutins || []).find(item => item.id === id);
+      if (!r) return alert("Data rutin tidak ditemukan.");
+
+      document.getElementById('edit-rutin-id').value = r.id;
+      document.getElementById('edit-rutin-id-label').innerText = `ID: ${r.id}`;
+      document.getElementById('edit-rutin-desc').value = r.keterangan || "";
+      document.getElementById('edit-rutin-nominal').value = r.nominal || 0;
+      document.getElementById('edit-rutin-date').value = r.execDate || 1;
+      document.getElementById('edit-rutin-cat').value = r.kategori || "Cicilan Utang";
+      document.getElementById('edit-rutin-acc').value = r.akun || "BCA";
+      document.getElementById('edit-rutin-status').value = r.status || "AKTIF";
+
+      const modal = document.getElementById('modal-edit-rutin');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeModalEditRutin() {
+      const modal = document.getElementById('modal-edit-rutin');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function submitEditRutin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit-edit-rutin');
+      const origText = btn.innerText;
+      btn.innerText = "Menyimpan...";
+      btn.disabled = true;
+
+      const payload = {
+        action: "editRutin",
+        id: document.getElementById('edit-rutin-id').value,
+        keterangan: document.getElementById('edit-rutin-desc').value,
+        nominal: document.getElementById('edit-rutin-nominal').value,
+        tanggalEksekusi: document.getElementById('edit-rutin-date').value,
+        kategori: document.getElementById('edit-rutin-cat').value,
+        akun: document.getElementById('edit-rutin-acc').value,
+        status: document.getElementById('edit-rutin-status').value,
+        tipe: "OUT",
+        frekuensi: "BULANAN"
+      };
+
+      try {
+        const res = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.success) {
+          closeModalEditRutin();
+          fetchDashboardData();
+        } else {
+          alert("Gagal mengupdate rutin: " + (data.message || "Unknown error"));
+        }
+      } catch (err) {
+        alert("Error update rutin: " + err.message);
+      } finally {
+        btn.innerText = origText;
+        btn.disabled = false;
+      }
     }
 
     // ==========================================
@@ -1228,8 +1372,9 @@
           <td class="p-3.5 text-slate-500">${r.kategori} <br/><span class="text-[10px] bg-slate-100 px-1 rounded border">Via: ${r.akun}</span></td>
           <td class="p-3.5 text-indigo-700 font-medium whitespace-nowrap">Tiap Tgl ${r.execDate} <br/><span class="text-[10px] text-slate-400">(${r.freq})</span></td>
           <td class="p-3.5 text-center">${statusBadge}</td>
-          <td class="p-3.5 text-center">
-            <button onclick="deleteRutin('${r.id}')" class="text-rose-500 hover:underline text-xs font-semibold">Hapus</button>
+          <td class="p-3.5 text-center whitespace-nowrap">
+            <button onclick="openEditRutin('${r.id}')" class="text-indigo-600 hover:text-indigo-900 font-semibold text-xs mr-2 transition">Edit</button>
+            <button onclick="deleteRutin('${r.id}')" class="text-rose-500 hover:text-rose-700 font-semibold text-xs transition">Hapus</button>
           </td>
         `;
         tbody.appendChild(tr);
