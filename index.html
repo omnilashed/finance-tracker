@@ -124,10 +124,11 @@
                   <th class="p-3.5">Kategori</th>
                   <th class="p-3.5">Akun</th>
                   <th class="p-3.5 text-right">Nominal</th>
+                  <th class="p-3.5 text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody id="trx-table-body" class="divide-y divide-slate-100 text-slate-700">
-                <tr><td colspan="6" class="p-6 text-center text-slate-400">Sedang memuat data dari spreadsheet...</td></tr>
+                <tr><td colspan="7" class="p-6 text-center text-slate-400">Sedang memuat data dari spreadsheet...</td></tr>
               </tbody>
             </table>
           </div>
@@ -412,6 +413,78 @@
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
           <button type="button" onclick="closeModalTrx()" class="px-4 py-2 border rounded-xl hover:bg-slate-50 font-medium">Batal</button>
           <button type="submit" id="btn-submit-trx" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">Simpan Transaksi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT TRANSAKSI -->
+  <div id="modal-edit-trx" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-4 h-4 text-indigo-600"></i> Edit Transaksi
+        </h3>
+        <button type="button" onclick="closeModalEditTrx()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form onsubmit="submitEditTrx(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="edit-trx-id">
+        <input type="hidden" id="edit-trx-row-index">
+        <input type="hidden" id="edit-trx-user">
+        
+        <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+          <span id="edit-trx-id-label">ID: -</span>
+          <span id="edit-trx-user-label" class="bg-indigo-50 text-indigo-700 font-semibold px-2 py-0.5 rounded-full font-sans">User: -</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-slate-600">Tanggal</label>
+            <input type="date" id="edit-trx-date" required class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-600">Tipe Transaksi</label>
+            <select id="edit-trx-type" onchange="updateEditCategoryOptions()" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-semibold">
+              <option value="OUT">Pengeluaran (OUT)</option>
+              <option value="IN">Pemasukan (IN)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-slate-600">Keterangan Transaksi</label>
+          <input type="text" id="edit-trx-desc" required class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-slate-600">Nominal (Rp)</label>
+            <input type="number" id="edit-trx-nominal" required class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-bold">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-600">Kategori</label>
+            <select id="edit-trx-cat" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-medium">
+              <!-- Diisi oleh updateEditCategoryOptions() -->
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-slate-600">Akun / Rekening</label>
+          <select id="edit-trx-account" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-medium">
+            <option value="Cash">Cash / Tunai</option>
+            <option value="BCA">BCA</option>
+            <option value="SeaBank">SeaBank</option>
+            <option value="Gopay">GoPay</option>
+          </select>
+          <p class="text-[10px] text-slate-400 mt-1">Saldo rekening lama & baru otomatis disinkronkan kembali.</p>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModalEditTrx()" class="px-4 py-2 border rounded-xl hover:bg-slate-50 font-medium">Batal</button>
+          <button type="submit" id="btn-submit-edit-trx" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">Simpan Perubahan</button>
         </div>
       </form>
     </div>
@@ -1007,14 +1080,9 @@
     // ==========================================
     // OPSI KATEGORI TRANSAKSI DINAMIS
     // ==========================================
-    function updateCategoryOptions() {
-      const type = document.getElementById('form-type') ? document.getElementById('form-type').value : 'OUT';
-      const catSelect = document.getElementById('form-cat');
-      if (!catSelect) return;
-      catSelect.innerHTML = '';
-
+    function getCategoryOptionsHtml(type) {
       if (type === 'OUT') {
-        catSelect.innerHTML = `
+        return `
           <optgroup label="🏠 Kebutuhan Pokok">
             <option value="Konsumsi">Konsumsi (Makan & Minum Harian)</option>
             <option value="Belanja Bulanan">Belanja Bulanan & Dapur</option>
@@ -1049,7 +1117,7 @@
           </optgroup>
         `;
       } else {
-        catSelect.innerHTML = `
+        return `
           <optgroup label="💵 Pemasukan & Pendapatan">
             <option value="Gaji">Gaji Bulanan Utama</option>
             <option value="Dana Tambahan">Dana Tambahan</option>
@@ -1059,6 +1127,22 @@
             <option value="Pendapatan Lainnya">Pendapatan Lainnya</option>
           </optgroup>
         `;
+      }
+    }
+
+    function updateCategoryOptions() {
+      const type = document.getElementById('form-type') ? document.getElementById('form-type').value : 'OUT';
+      const catSelect = document.getElementById('form-cat');
+      if (catSelect) catSelect.innerHTML = getCategoryOptionsHtml(type);
+    }
+
+    function updateEditCategoryOptions(selectedVal) {
+      const type = document.getElementById('edit-trx-type') ? document.getElementById('edit-trx-type').value : 'OUT';
+      const catSelect = document.getElementById('edit-trx-cat');
+      if (!catSelect) return;
+      catSelect.innerHTML = getCategoryOptionsHtml(type);
+      if (selectedVal) {
+        catSelect.value = selectedVal;
       }
     }
 
@@ -1419,7 +1503,7 @@
       const filterUser = document.getElementById('user-filter').value;
       const list = (appData.transactions || []).filter(t => filterUser === 'ALL' || t.user.toLowerCase().includes(filterUser.toLowerCase()));
 
-      if (list.length === 0) return tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Belum ada transaksi.</td></tr>`;
+      if (list.length === 0) return tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Belum ada transaksi.</td></tr>`;
 
       list.forEach(t => {
         const tr = document.createElement('tr');
@@ -1431,9 +1515,14 @@
           <td class="p-3.5"><span class="px-2 py-0.5 border rounded-md text-[11px] bg-slate-50">${t.kategori}</span></td>
           <td class="p-3.5 text-slate-500">${t.akun}</td>
           <td class="p-3.5 text-right font-semibold ${color} whitespace-nowrap">${t.tipe === 'OUT' ? '-' : '+'} ${formatIDR(t.nominal)}</td>
+          <td class="p-3.5 text-center whitespace-nowrap">
+            <button onclick="openEditTrx('${t.id || ''}', ${t.rowIndex || 'null'})" class="text-indigo-600 hover:text-indigo-900 font-semibold text-xs mr-2 transition">Edit</button>
+            <button onclick="deleteTrx('${t.id || ''}', ${t.rowIndex || 'null'})" class="text-rose-500 hover:text-rose-700 font-semibold text-xs transition">Hapus</button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
+      lucide.createIcons();
     }
 
     async function submitTransaction(e) {
@@ -1476,6 +1565,100 @@
       document.getElementById('modal-trx').classList.add('hidden'); 
       document.getElementById('modal-trx').classList.remove('flex'); 
     }
+
+    // ==========================================
+    // EDIT & HAPUS TRANSAKSI DENGAN INTEGRASI SALDO
+    // ==========================================
+    function openEditTrx(id, rowIndex) {
+      const list = appData.transactions || [];
+      const t = list.find(item => (id && item.id === id) || (rowIndex && item.rowIndex === rowIndex));
+      if (!t) return alert("Data transaksi tidak ditemukan.");
+
+      document.getElementById('edit-trx-id').value = t.id || "";
+      document.getElementById('edit-trx-row-index').value = t.rowIndex || "";
+      document.getElementById('edit-trx-user').value = t.user || currentUser.name;
+      document.getElementById('edit-trx-id-label').innerText = t.id ? `ID: ${t.id}` : `Baris: ${t.rowIndex || '-'}`;
+      document.getElementById('edit-trx-user-label').innerText = `User: ${t.user || currentUser.name}`;
+
+      document.getElementById('edit-trx-date').value = t.tanggal || new Date().toISOString().slice(0, 10);
+      document.getElementById('edit-trx-type').value = t.tipe || "OUT";
+      document.getElementById('edit-trx-desc').value = t.keterangan || "";
+      document.getElementById('edit-trx-nominal').value = t.nominal || 0;
+      document.getElementById('edit-trx-account').value = t.akun || "Cash";
+
+      updateEditCategoryOptions(t.kategori);
+
+      const modal = document.getElementById('modal-edit-trx');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeModalEditTrx() {
+      const modal = document.getElementById('modal-edit-trx');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function submitEditTrx(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit-edit-trx');
+      const origText = btn.innerText;
+      btn.innerText = "Menyimpan & Menyesuaikan Saldo...";
+      btn.disabled = true;
+
+      const payload = {
+        action: "editTransaction",
+        id: document.getElementById('edit-trx-id').value,
+        rowIndex: document.getElementById('edit-trx-row-index').value,
+        tanggal: document.getElementById('edit-trx-date').value,
+        tipe: document.getElementById('edit-trx-type').value,
+        keterangan: document.getElementById('edit-trx-desc').value,
+        nominal: document.getElementById('edit-trx-nominal').value,
+        kategori: document.getElementById('edit-trx-cat').value,
+        akun: document.getElementById('edit-trx-account').value,
+        user: document.getElementById('edit-trx-user').value || currentUser.name
+      };
+
+      try {
+        const res = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.success) {
+          closeModalEditTrx();
+          fetchDashboardData();
+        } else {
+          alert("Gagal mengupdate transaksi: " + (data.message || "Unknown error"));
+        }
+      } catch (err) {
+        alert("Error update transaksi: " + err.message);
+      } finally {
+        btn.innerText = origText;
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteTrx(id, rowIndex) {
+      const label = id ? id : `baris ${rowIndex}`;
+      if (!confirm(`Hapus transaksi ${label}?\n\nPerhatian: Seluruh saldo akun dan budget yang terpengaruh oleh transaksi ini akan otomatis dikembalikan ke saldo semula.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(GAS_API_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "deleteTransaction", id: id, rowIndex: rowIndex })
+        });
+        const data = await res.json();
+        if (data.success) {
+          fetchDashboardData();
+        } else {
+          alert("Gagal menghapus transaksi: " + (data.message || "Unknown error"));
+        }
+      } catch (err) {
+        alert("Error hapus transaksi: " + err.message);
+      }
+    }
+
     function formatIDR(num) { return "Rp " + (Number(num) || 0).toLocaleString("id-ID"); }
   </script>
 </body>
