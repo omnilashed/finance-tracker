@@ -611,10 +611,11 @@
                   <th class="p-3.5 text-right">Saldo Saat Ini</th>
                   <th class="p-3.5 text-center">Porsi (%)</th>
                   <th class="p-3.5 text-center">Status</th>
+                  <th class="p-3.5 text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody id="rekening-table-body" class="divide-y divide-slate-100 text-slate-700">
-                <tr><td colspan="8" class="p-6 text-center text-slate-400">Sedang memuat data dari spreadsheet...</td></tr>
+                <tr><td colspan="9" class="p-6 text-center text-slate-400">Sedang memuat data dari spreadsheet...</td></tr>
               </tbody>
               <tfoot id="rekening-table-foot" class="bg-slate-50/80 font-bold border-t border-slate-200 text-xs">
               </tfoot>
@@ -1094,6 +1095,110 @@
           <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">Simpan Target</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL DETAIL TABUNGAN SESUAI KATEGORI -->
+  <div id="modal-detail-tabungan" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-3xl w-full p-5 sm:p-6 space-y-4 shadow-2xl my-auto border border-slate-100 max-h-[92vh] flex flex-col">
+      <!-- HEADER -->
+      <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-3">
+          <div id="detail-tabungan-icon-container" class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold flex-shrink-0 shadow-xs">
+            <i id="detail-tabungan-icon" data-lucide="layers" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 id="detail-tabungan-title" class="font-black text-slate-900 text-base sm:text-lg">Detail Tabungan Investasi</h3>
+              <span id="detail-tabungan-badge" class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wider">Investasi</span>
+            </div>
+            <p id="detail-tabungan-desc" class="text-xs text-slate-400 mt-0.5">Rincian mutasi perpindahan dana per sub-kategori alokasi.</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeModalDetailTabungan()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- RINGKASAN SALDO & PROGRESS PROPORSI KATEGORI -->
+      <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-100 space-y-3">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div>
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total Saldo Terkumpul di Rekening</span>
+            <div class="text-2xl font-black text-slate-900 font-mono mt-0.5" id="detail-tabungan-total-saldo">Rp 0</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-quick-nabung" onclick="quickNabungDetailTabungan()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Alokasikan Dana
+            </button>
+          </div>
+        </div>
+
+        <!-- Visual Multi-segment Distribution Bar -->
+        <div>
+          <div class="flex justify-between items-center text-[11px] mb-1.5 font-medium text-slate-500">
+            <span>Proporsi Alokasi Dana per Sub-Kategori</span>
+            <span id="detail-tabungan-cat-count" class="font-semibold text-indigo-600">0 Kategori</span>
+          </div>
+          <div id="detail-tabungan-dist-bar" class="w-full bg-slate-200/80 rounded-full h-2.5 overflow-hidden flex gap-0.5">
+            <!-- Dynamic multi-colored segments -->
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTER KATEGORI (PILLS DENGAN SUBTOTAL) -->
+      <div>
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <i data-lucide="filter" class="w-3.5 h-3.5 text-indigo-600"></i> Pilih Kategori:
+          </span>
+          <span class="text-[10px] text-slate-400">Klik kategori untuk memfilter riwayat mutasi</span>
+        </div>
+        <div id="detail-tabungan-pills" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pb-1">
+          <!-- Dynamic Category Pills -->
+        </div>
+      </div>
+
+      <!-- PENCARIAN & STATS FILTERED -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-2 border-t border-slate-100">
+        <div class="text-xs font-semibold text-slate-600 flex items-center gap-2 flex-wrap">
+          <span id="detail-tabungan-selected-cat-title" class="font-bold text-indigo-700">Semua Kategori</span>
+          <span class="text-slate-300">•</span>
+          <span id="detail-tabungan-selected-cat-subtotal" class="font-mono font-bold text-emerald-600">Rp 0</span>
+          <span class="text-slate-300">•</span>
+          <span id="detail-tabungan-selected-cat-count" class="text-slate-500 text-[11px]">0 Transaksi</span>
+        </div>
+        <div class="w-full sm:w-56">
+          <input type="text" id="detail-tabungan-search" oninput="renderDetailTabunganTransactions()" placeholder="Cari keterangan..." class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500">
+        </div>
+      </div>
+
+      <!-- TABEL RIWAYAT PERPINDAHAN DANA (SCROLLABLE) -->
+      <div class="flex-1 overflow-y-auto border border-slate-100 rounded-xl max-h-64 sm:max-h-72">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-500 sticky top-0 border-b border-slate-100 uppercase text-[10px] tracking-wider z-10">
+            <tr>
+              <th class="p-3 whitespace-nowrap">Tanggal</th>
+              <th class="p-3">Alur Rekening</th>
+              <th class="p-3">Kategori</th>
+              <th class="p-3">Keterangan</th>
+              <th class="p-3 text-center">User</th>
+              <th class="p-3 text-right whitespace-nowrap">Nominal</th>
+            </tr>
+          </thead>
+          <tbody id="detail-tabungan-tbody" class="divide-y divide-slate-100 text-slate-700">
+            <!-- Dynamic Rows -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="flex justify-between items-center pt-3 border-t border-slate-100 text-xs">
+        <span class="text-[11px] text-slate-400">Mutasi dana dihitung dari riwayat transfer & transaksi akun ini</span>
+        <button type="button" onclick="closeModalDetailTabungan()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition">
+          Tutup
+        </button>
+      </div>
     </div>
   </div>
 
@@ -2950,18 +3055,575 @@
             </div>
           </div>
 
-          <div class="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between gap-2">
-            <button onclick="openEditGoal('${k}')" class="text-xs font-semibold text-slate-600 hover:text-indigo-700 transition flex items-center gap-1">
-              <i data-lucide="edit-2" class="w-3 h-3"></i> Atur Target
-            </button>
+          <div class="mt-4 pt-3 border-t border-slate-200/60 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5">
+              <button onclick="openEditGoal('${k}')" title="Atur Target Nominal & Tanggal" class="text-xs font-semibold text-slate-600 hover:text-indigo-700 transition flex items-center gap-1 py-1 px-1.5 rounded-lg hover:bg-white/80">
+                <i data-lucide="edit-2" class="w-3 h-3"></i> Target
+              </button>
+              <button onclick="openDetailTabungan('${k}')" title="Lihat Detail Perpindahan Dana sesuai Kategori" class="px-2.5 py-1.5 rounded-xl bg-white/95 hover:bg-white border border-slate-200 hover:border-indigo-300 text-indigo-700 font-bold text-xs shadow-2xs hover:shadow-xs transition flex items-center gap-1.5">
+                <i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-600"></i> Detail Tabungan
+              </button>
+            </div>
             <button onclick="openNabungSekarang('${k}')" class="px-3 py-1.5 rounded-xl ${g.theme.btn} font-bold text-xs shadow-sm transition flex items-center gap-1.5">
-              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Nabung Sekarang
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Nabung
             </button>
           </div>
         `;
         container.appendChild(card);
       });
       lucide.createIcons();
+    }
+
+    // ==========================================
+    // DETAIL TABUNGAN SESUAI SUB-KATEGORI (MODAL)
+    // ==========================================
+    let currentDetailState = {
+      accountName: '',
+      goalKey: '',
+      activeCategory: 'ALL',
+      allCategoryStats: [],
+      matchedTransactions: []
+    };
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatShortDate(d) {
+      if (!d) return '-';
+      const parts = d.split('-');
+      return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : d;
+    }
+
+    // Pemetaan Sub-Kategori Cerdas & Normalisasi
+    function extractSubCategory(t, mainAccountName) {
+      const accLower = (mainAccountName || '').toLowerCase().trim();
+      const cat = (t.kategori || '').trim();
+      const catLower = cat.toLowerCase();
+      const ketLower = (t.keterangan || '').toLowerCase();
+
+      // 1. Tabungan Investasi
+      if (accLower.includes('investasi')) {
+        if (catLower.includes('saham') || ketLower.includes('saham')) {
+          return { name: 'Saham', icon: 'trending-up', color: '#10b981', badgeClass: 'bg-emerald-100 text-emerald-800' };
+        }
+        if (catLower.includes('pasar uang') || catLower.includes('rdpu') || ketLower.includes('pasar uang') || ketLower.includes('rdpu')) {
+          return { name: 'Pasar Uang (RDPU)', icon: 'banknote', color: '#06b6d4', badgeClass: 'bg-cyan-100 text-cyan-800' };
+        }
+        if (catLower.includes('obligasi') || catLower.includes('sbn') || catLower.includes('sukuk') || ketLower.includes('obligasi') || ketLower.includes('sbn') || ketLower.includes('sukuk') || ketLower.includes('ori')) {
+          return { name: 'Obligasi & SBN', icon: 'file-text', color: '#8b5cf6', badgeClass: 'bg-purple-100 text-purple-800' };
+        }
+        if (catLower.includes('emas') || catLower.includes('antam') || ketLower.includes('emas') || ketLower.includes('antam') || ketLower.includes('logam mulia')) {
+          return { name: 'Emas Logam Mulia', icon: 'coins', color: '#f59e0b', badgeClass: 'bg-amber-100 text-amber-800' };
+        }
+        if (catLower.includes('kripto') || catLower.includes('crypto') || catLower.includes('reksadana') || ketLower.includes('kripto') || ketLower.includes('reksadana')) {
+          return { name: 'Kripto & Reksadana', icon: 'zap', color: '#ec4899', badgeClass: 'bg-pink-100 text-pink-800' };
+        }
+        if (cat.includes('-')) {
+          const custom = cat.split('-').pop().trim();
+          return { name: custom, icon: 'tag', color: '#6366f1', badgeClass: 'bg-indigo-100 text-indigo-800' };
+        }
+        return { name: 'Investasi Umum', icon: 'pie-chart', color: '#64748b', badgeClass: 'bg-slate-100 text-slate-800' };
+      }
+
+      // 2. Tabungan Jalan-Jalan & Liburan
+      if (accLower.includes('jalan') || accLower.includes('liburan') || accLower.includes('wisata')) {
+        if (catLower.includes('tiket') || catLower.includes('transport') || ketLower.includes('tiket') || ketLower.includes('pesawat') || ketLower.includes('kereta')) {
+          return { name: 'Tiket & Transport', icon: 'plane', color: '#0284c7', badgeClass: 'bg-sky-100 text-sky-800' };
+        }
+        if (catLower.includes('hotel') || catLower.includes('staycation') || catLower.includes('penginapan') || ketLower.includes('hotel') || ketLower.includes('staycation') || ketLower.includes('villa')) {
+          return { name: 'Hotel & Staycation', icon: 'bed-single', color: '#6366f1', badgeClass: 'bg-indigo-100 text-indigo-800' };
+        }
+        if (catLower.includes('wisata') || catLower.includes('kuliner') || ketLower.includes('wisata') || ketLower.includes('kuliner') || ketLower.includes('makan')) {
+          return { name: 'Wisata & Kuliner', icon: 'utensils', color: '#f97316', badgeClass: 'bg-orange-100 text-orange-800' };
+        }
+        if (catLower.includes('impian') || ketLower.includes('impian')) {
+          return { name: 'Liburan Impian', icon: 'compass', color: '#06b6d4', badgeClass: 'bg-cyan-100 text-cyan-800' };
+        }
+        if (cat.includes('-')) {
+          const custom = cat.split('-').pop().trim();
+          return { name: custom, icon: 'tag', color: '#6366f1', badgeClass: 'bg-indigo-100 text-indigo-800' };
+        }
+        return { name: 'Jalan-Jalan Umum', icon: 'map-pin', color: '#64748b', badgeClass: 'bg-slate-100 text-slate-800' };
+      }
+
+      // 3. Tabungan Barang / Alat Mahal
+      if (accLower.includes('barang') || accLower.includes('alat') || accLower.includes('gadget')) {
+        if (catLower.includes('laptop') || catLower.includes('komputer') || catLower.includes('pc') || ketLower.includes('laptop') || ketLower.includes('macbook') || ketLower.includes('pc')) {
+          return { name: 'Laptop & Komputer', icon: 'laptop', color: '#7c3aed', badgeClass: 'bg-purple-100 text-purple-800' };
+        }
+        if (catLower.includes('smartphone') || catLower.includes('gadget') || catLower.includes('hp') || ketLower.includes('smartphone') || ketLower.includes('iphone') || ketLower.includes('android')) {
+          return { name: 'Smartphone & Gadget', icon: 'smartphone', color: '#ec4899', badgeClass: 'bg-pink-100 text-pink-800' };
+        }
+        if (catLower.includes('kendaraan') || catLower.includes('motor') || catLower.includes('mobil') || ketLower.includes('kendaraan') || ketLower.includes('dp motor') || ketLower.includes('dp mobil')) {
+          return { name: 'Kendaraan / DP Motor', icon: 'car', color: '#e11d48', badgeClass: 'bg-rose-100 text-rose-800' };
+        }
+        if (catLower.includes('elektronik') || catLower.includes('alat kerja') || ketLower.includes('elektronik') || ketLower.includes('alat kerja') || ketLower.includes('monitor')) {
+          return { name: 'Alat Kerja & Elektronik', icon: 'cpu', color: '#0d9488', badgeClass: 'bg-teal-100 text-teal-800' };
+        }
+        if (catLower.includes('kamera') || catLower.includes('hobi') || ketLower.includes('kamera') || ketLower.includes('hobi')) {
+          return { name: 'Kamera & Hobi', icon: 'camera', color: '#f59e0b', badgeClass: 'bg-amber-100 text-amber-800' };
+        }
+        if (cat.includes('-')) {
+          const custom = cat.split('-').pop().trim();
+          return { name: custom, icon: 'tag', color: '#6366f1', badgeClass: 'bg-indigo-100 text-indigo-800' };
+        }
+        return { name: 'Barang & Alat Umum', icon: 'box', color: '#64748b', badgeClass: 'bg-slate-100 text-slate-800' };
+      }
+
+      // 4. SeaBank / Dana Darurat
+      if (accLower.includes('seabank')) {
+        if (catLower.includes('darurat') || ketLower.includes('darurat')) {
+          return { name: 'Simpanan Dana Darurat', icon: 'shield-alert', color: '#d97706', badgeClass: 'bg-amber-100 text-amber-900' };
+        }
+        const clean = cat.replace(/^Transfer ke\s*/i, '').trim() || 'Dana Darurat';
+        return { name: clean, icon: 'shield', color: '#f59e0b', badgeClass: 'bg-amber-100 text-amber-800' };
+      }
+
+      // 5. Rekening Lainnya
+      const cleaned = cat.replace(/^Transfer ke\s*/i, '').replace(/^Transfer\s*/i, '').trim() || 'Mutasi Rekening';
+      return { name: cleaned, icon: 'tag', color: '#6366f1', badgeClass: 'bg-indigo-100 text-indigo-800' };
+    }
+
+    // Default template categories per akun
+    function getDefaultSubCategories(accountName) {
+      const n = (accountName || '').toLowerCase().trim();
+      if (n.includes('investasi')) {
+        return ['Saham', 'Pasar Uang (RDPU)', 'Obligasi & SBN', 'Emas Logam Mulia', 'Kripto & Reksadana'];
+      }
+      if (n.includes('jalan') || n.includes('liburan')) {
+        return ['Liburan Impian', 'Tiket & Transport', 'Hotel & Staycation', 'Wisata & Kuliner'];
+      }
+      if (n.includes('barang') || n.includes('alat')) {
+        return ['Laptop & Komputer', 'Smartphone & Gadget', 'Kendaraan / DP Motor', 'Alat Kerja & Elektronik', 'Kamera & Hobi'];
+      }
+      if (n.includes('seabank')) {
+        return ['Simpanan Dana Darurat'];
+      }
+      return [];
+    }
+
+    function openDetailTabungan(keyOrAccountName) {
+      const goals = getSavingsGoals();
+      let accountName = keyOrAccountName;
+      let goalKey = '';
+
+      if (goals[keyOrAccountName]) {
+        goalKey = keyOrAccountName;
+        accountName = goals[keyOrAccountName].account;
+      } else {
+        const foundKey = Object.keys(goals).find(k => goals[k].account.toLowerCase() === keyOrAccountName.toLowerCase());
+        if (foundKey) goalKey = foundKey;
+      }
+
+      openDetailTabunganByAccount(accountName, goalKey);
+    }
+
+    function openDetailTabunganByAccount(accountName, optionalGoalKey = '') {
+      const accounts = appData?.accounts || [];
+      const transactions = appData?.transactions || [];
+      const acc = accounts.find(a => a.nama.toLowerCase().trim() === accountName.toLowerCase().trim()) || { nama: accountName, saldo: 0, saldoAwal: 0 };
+      const meta = getAccountMeta(acc.nama);
+
+      currentDetailState.accountName = acc.nama;
+      currentDetailState.goalKey = optionalGoalKey;
+      currentDetailState.activeCategory = 'ALL';
+
+      // Set Header Modal
+      const modal = document.getElementById('modal-detail-tabungan');
+      const elTitle = document.getElementById('detail-tabungan-title');
+      const elDesc = document.getElementById('detail-tabungan-desc');
+      const elBadge = document.getElementById('detail-tabungan-badge');
+      const elTotalSaldo = document.getElementById('detail-tabungan-total-saldo');
+      const elIconCont = document.getElementById('detail-tabungan-icon-container');
+      const elIcon = document.getElementById('detail-tabungan-icon');
+      const searchInput = document.getElementById('detail-tabungan-search');
+
+      if (searchInput) searchInput.value = '';
+      if (elTitle) elTitle.innerText = `Detail Tabungan: ${acc.nama}`;
+      if (elDesc) elDesc.innerText = `Rincian mutasi perpindahan dana dan alokasi sesuai kategori untuk ${acc.nama}.`;
+      if (elBadge) {
+        elBadge.innerText = meta.type;
+        elBadge.className = `text-[10px] px-2 py-0.5 rounded-full font-bold ${meta.badgeColor} uppercase tracking-wider`;
+      }
+      if (elTotalSaldo) elTotalSaldo.innerText = formatIDR(acc.saldo);
+      if (elIconCont) elIconCont.className = `w-10 h-10 rounded-xl ${meta.bgColor} ${meta.textColor} flex items-center justify-center font-bold flex-shrink-0 shadow-xs`;
+      if (elIcon) elIcon.setAttribute('data-lucide', meta.icon);
+
+      // Cari seluruh transaksi yang relevan
+      const accLower = acc.nama.toLowerCase().trim();
+      const rawKey = accLower.replace('tabungan ', '').trim();
+
+      const matched = [];
+      transactions.forEach(t => {
+        const trxAcc = (t.akun || '').toLowerCase().trim();
+        const trxCat = (t.kategori || '').toLowerCase().trim();
+        const trxKet = (t.keterangan || '').toLowerCase().trim();
+        const nom = parseFloat(t.nominal) || 0;
+
+        let isMatch = false;
+        let isPlus = true;
+        let route = t.akun || '-';
+        let typeLabel = t.tipe || 'TRANSAKSI';
+
+        if (t.tipe === 'TRANSFER' || trxAcc.includes('->')) {
+          const parts = trxAcc.split('->').map(s => s.trim());
+          if (parts.length === 2) {
+            const from = parts[0];
+            const to = parts[1];
+            if (to.includes(accLower) || (rawKey && to.includes(rawKey))) {
+              isMatch = true;
+              isPlus = true;
+              route = `${parts[0]} ➔ ${parts[1]}`;
+              typeLabel = 'Transfer Masuk';
+            } else if (from.includes(accLower) || (rawKey && from.includes(rawKey))) {
+              isMatch = true;
+              isPlus = false;
+              route = `${parts[0]} ➔ ${parts[1]}`;
+              typeLabel = 'Transfer Keluar';
+            }
+          } else if (trxAcc === accLower || (rawKey && trxAcc.includes(rawKey))) {
+            isMatch = true;
+            isPlus = true;
+            route = trxAcc;
+            typeLabel = 'Transfer';
+          }
+        } else if (t.tipe === 'IN') {
+          if (trxAcc === accLower || (rawKey && trxAcc.includes(rawKey))) {
+            isMatch = true;
+            isPlus = true;
+            route = t.akun || 'Pemasukan';
+            typeLabel = 'Pemasukan (IN)';
+          }
+        } else if (t.tipe === 'OUT') {
+          if (trxAcc === accLower || (rawKey && trxAcc.includes(rawKey))) {
+            isMatch = true;
+            isPlus = false;
+            route = t.akun || 'Pengeluaran';
+            typeLabel = 'Pengeluaran (OUT)';
+          }
+        }
+
+        // Cek kategori spesifik tabungan jika belum match dari field akun
+        if (!isMatch) {
+          if (accLower.includes('investasi') && (trxCat.includes('investasi') || trxCat.includes('saham') || trxCat.includes('rdpu') || trxCat.includes('obligasi') || trxCat.includes('sbn') || trxCat.includes('emas'))) {
+            isMatch = true;
+            isPlus = t.tipe !== 'OUT';
+            route = t.akun || 'Alokasi Investasi';
+            typeLabel = t.tipe === 'TRANSFER' ? 'Transfer' : (isPlus ? 'Masuk' : 'Keluar');
+          } else if ((accLower.includes('jalan') || accLower.includes('liburan')) && (trxCat.includes('jalan-jalan') || trxCat.includes('liburan'))) {
+            isMatch = true;
+            isPlus = t.tipe !== 'OUT';
+            route = t.akun || 'Alokasi Liburan';
+            typeLabel = t.tipe === 'TRANSFER' ? 'Transfer' : (isPlus ? 'Masuk' : 'Keluar');
+          } else if ((accLower.includes('barang') || accLower.includes('alat')) && (trxCat.includes('barang/alat') || trxCat.includes('barang & alat'))) {
+            isMatch = true;
+            isPlus = t.tipe !== 'OUT';
+            route = t.akun || 'Alokasi Barang';
+            typeLabel = t.tipe === 'TRANSFER' ? 'Transfer' : (isPlus ? 'Masuk' : 'Keluar');
+          } else if (accLower.includes('seabank') && (trxCat.includes('dana darurat') || trxKet.includes('dana darurat'))) {
+            isMatch = true;
+            isPlus = t.tipe !== 'OUT';
+            route = t.akun || 'Simpanan SeaBank';
+            typeLabel = 'Dana Darurat';
+          }
+        }
+
+        if (isMatch) {
+          const subCatMeta = extractSubCategory(t, acc.nama);
+          matched.push({
+            raw: t,
+            id: t.id,
+            tanggal: t.tanggal,
+            route: route,
+            isPlus: isPlus,
+            nominal: nom,
+            kategori: subCatMeta.name,
+            kategoriMeta: subCatMeta,
+            keterangan: t.keterangan || '-',
+            user: t.user || 'User',
+            typeLabel: typeLabel
+          });
+        }
+      });
+
+      // Urutkan tanggal mutasi DESC
+      matched.sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || '') || ((b.id || '') > (a.id || '') ? 1 : -1));
+      currentDetailState.matchedTransactions = matched;
+
+      // Kelompokkan dan hitung per sub-kategori
+      const categoryMap = {};
+      // Inisialisasi default kategori
+      getDefaultSubCategories(acc.nama).forEach(catName => {
+        const dummyMeta = extractSubCategory({ kategori: catName, keterangan: '' }, acc.nama);
+        categoryMap[catName] = {
+          name: catName,
+          meta: dummyMeta,
+          totalIn: 0,
+          totalOut: 0,
+          net: 0,
+          count: 0
+        };
+      });
+
+      matched.forEach(item => {
+        const cName = item.kategori;
+        if (!categoryMap[cName]) {
+          categoryMap[cName] = {
+            name: cName,
+            meta: item.kategoriMeta,
+            totalIn: 0,
+            totalOut: 0,
+            net: 0,
+            count: 0
+          };
+        }
+        if (item.isPlus) categoryMap[cName].totalIn += item.nominal;
+        else categoryMap[cName].totalOut += item.nominal;
+        categoryMap[cName].net = categoryMap[cName].totalIn - categoryMap[cName].totalOut;
+        categoryMap[cName].count += 1;
+      });
+
+      const categoryStats = Object.values(categoryMap);
+      currentDetailState.allCategoryStats = categoryStats;
+
+      // Render Distribution Multi-bar
+      renderDetailTabunganDistributionBar(categoryStats, acc.saldo);
+
+      // Render Pills Filter
+      renderDetailTabunganPills(categoryStats, matched.length);
+
+      // Render Tabel Transaksi
+      renderDetailTabunganTransactions();
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeModalDetailTabungan() {
+      const modal = document.getElementById('modal-detail-tabungan');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function renderDetailTabunganDistributionBar(categoryStats, totalAccountBalance) {
+      const barCont = document.getElementById('detail-tabungan-dist-bar');
+      const catCountEl = document.getElementById('detail-tabungan-cat-count');
+      if (!barCont) return;
+
+      barCont.innerHTML = '';
+      const positiveCategories = categoryStats.filter(c => c.net > 0);
+      const totalNetPositive = positiveCategories.reduce((s, c) => s + c.net, 0) || totalAccountBalance || 1;
+
+      if (catCountEl) {
+        catCountEl.innerText = `${positiveCategories.length} Sub-Kategori Terisi`;
+      }
+
+      if (positiveCategories.length === 0) {
+        barCont.innerHTML = `<div class="w-full h-full bg-slate-200" title="Belum ada mutasi"></div>`;
+        return;
+      }
+
+      positiveCategories.forEach(cat => {
+        const pct = Math.max((cat.net / totalNetPositive) * 100, 2);
+        const seg = document.createElement('div');
+        seg.className = "h-full transition-all duration-300";
+        seg.style.width = `${pct}%`;
+        seg.style.backgroundColor = cat.meta.color;
+        seg.title = `${cat.name}: ${formatIDR(cat.net)} (${pct.toFixed(1)}%)`;
+        barCont.appendChild(seg);
+      });
+    }
+
+    function renderDetailTabunganPills(categoryStats, totalTrxCount) {
+      const pillsCont = document.getElementById('detail-tabungan-pills');
+      if (!pillsCont) return;
+
+      pillsCont.innerHTML = '';
+
+      // Hitung total net semua
+      const grandNet = currentDetailState.matchedTransactions.reduce((sum, item) => sum + (item.isPlus ? item.nominal : -item.nominal), 0);
+
+      // Pill "Semua Kategori"
+      const allPill = document.createElement('button');
+      const isAllActive = currentDetailState.activeCategory === 'ALL';
+      allPill.className = `px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs ${
+        isAllActive
+          ? 'bg-indigo-600 text-white shadow-xs'
+          : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+      }`;
+      allPill.innerHTML = `
+        <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+        <span>Semua</span>
+        <span class="text-[10px] px-1.5 py-0.2 rounded-full ${isAllActive ? 'bg-indigo-700 text-indigo-100' : 'bg-white text-slate-600'} font-mono">${formatIDR(grandNet)}</span>
+      `;
+      allPill.onclick = () => selectDetailTabunganCategory('ALL');
+      pillsCont.appendChild(allPill);
+
+      // Pills untuk masing-masing Sub-Kategori
+      categoryStats.forEach(cat => {
+        const isActive = currentDetailState.activeCategory === cat.name;
+        const pill = document.createElement('button');
+        pill.className = `px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs ${
+          isActive
+            ? 'bg-indigo-600 text-white font-bold shadow-xs'
+            : 'bg-white border border-slate-200 hover:border-indigo-300 text-slate-700 hover:bg-slate-50'
+        }`;
+        pill.innerHTML = `
+          <span class="w-2 h-2 rounded-full" style="background-color: ${cat.meta.color}"></span>
+          <span>${cat.name}</span>
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-100 text-slate-600 font-mono'}">${formatIDR(cat.net)}</span>
+        `;
+        pill.onclick = () => selectDetailTabunganCategory(cat.name);
+        pillsCont.appendChild(pill);
+      });
+
+      lucide.createIcons();
+    }
+
+    function selectDetailTabunganCategory(catName) {
+      currentDetailState.activeCategory = catName;
+      renderDetailTabunganPills(currentDetailState.allCategoryStats, currentDetailState.matchedTransactions.length);
+      renderDetailTabunganTransactions();
+    }
+
+    function renderDetailTabunganTransactions() {
+      const tbody = document.getElementById('detail-tabungan-tbody');
+      const titleEl = document.getElementById('detail-tabungan-selected-cat-title');
+      const subtotalEl = document.getElementById('detail-tabungan-selected-cat-subtotal');
+      const countEl = document.getElementById('detail-tabungan-selected-cat-count');
+      const searchInput = document.getElementById('detail-tabungan-search');
+      const query = (searchInput?.value || '').toLowerCase().trim();
+
+      if (!tbody) return;
+
+      const activeCat = currentDetailState.activeCategory;
+      let filtered = currentDetailState.matchedTransactions.filter(item => {
+        if (activeCat !== 'ALL' && item.kategori !== activeCat) return false;
+        if (query) {
+          const ket = (item.keterangan || '').toLowerCase();
+          const kat = (item.kategori || '').toLowerCase();
+          const rute = (item.route || '').toLowerCase();
+          const usr = (item.user || '').toLowerCase();
+          if (!ket.includes(query) && !kat.includes(query) && !rute.includes(query) && !usr.includes(query)) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      // Hitung subtotal filtered
+      const subtotal = filtered.reduce((s, item) => s + (item.isPlus ? item.nominal : -item.nominal), 0);
+
+      if (titleEl) titleEl.innerText = activeCat === 'ALL' ? 'Semua Kategori' : activeCat;
+      if (subtotalEl) {
+        subtotalEl.innerText = (subtotal >= 0 ? '+ ' : '- ') + formatIDR(Math.abs(subtotal));
+        subtotalEl.className = `font-mono font-bold ${subtotal >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+      }
+      if (countEl) countEl.innerText = `${filtered.length} Transaksi`;
+
+      tbody.innerHTML = '';
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-8 text-center text-slate-400">
+              <div class="flex flex-col items-center justify-center gap-1.5">
+                <i data-lucide="inbox" class="w-6 h-6 text-slate-300"></i>
+                <span>Belum ada riwayat mutasi ${activeCat !== 'ALL' ? `untuk kategori "${activeCat}"` : ''}</span>
+              </div>
+            </td>
+          </tr>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      filtered.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50/80 transition";
+        const sign = item.isPlus ? '+ ' : '- ';
+        const colorClass = item.isPlus ? 'text-emerald-600' : 'text-rose-600';
+
+        tr.innerHTML = `
+          <td class="p-3 whitespace-nowrap text-slate-500 font-mono text-[11px]">${formatShortDate(item.tanggal)}</td>
+          <td class="p-3">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 font-semibold text-[11px] text-slate-700">
+              ${escapeHtml(item.route)}
+            </span>
+          </td>
+          <td class="p-3 whitespace-nowrap">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${item.kategoriMeta.badgeClass}">
+              <i data-lucide="${item.kategoriMeta.icon}" class="w-3 h-3"></i>
+              ${escapeHtml(item.kategori)}
+            </span>
+          </td>
+          <td class="p-3 text-slate-700 max-w-xs truncate" title="${escapeHtml(item.keterangan)}">
+            ${escapeHtml(item.keterangan)}
+          </td>
+          <td class="p-3 text-center whitespace-nowrap">
+            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold text-[10px]">${escapeHtml(item.user)}</span>
+          </td>
+          <td class="p-3 text-right whitespace-nowrap font-bold font-mono ${colorClass}">
+            ${sign}${formatIDR(item.nominal)}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    function quickNabungDetailTabungan() {
+      const accName = currentDetailState.accountName;
+      const activeCat = currentDetailState.activeCategory;
+      const goalKey = currentDetailState.goalKey;
+
+      closeModalDetailTabungan();
+
+      if (goalKey) {
+        openNabungSekarang(goalKey);
+        if (activeCat && activeCat !== 'ALL') {
+          setTimeout(() => {
+            const catSelect = document.getElementById('form-cat');
+            if (catSelect) {
+              const opt = Array.from(catSelect.options).find(o => o.value.toLowerCase().includes(activeCat.toLowerCase()));
+              if (opt) catSelect.value = opt.value;
+            }
+          }, 50);
+        }
+      } else {
+        openModalTrx();
+        const formType = document.getElementById('form-type');
+        if (formType) {
+          formType.value = 'TRANSFER';
+          updateCategoryOptions();
+        }
+
+        const toAccSelect = document.getElementById('form-to-account');
+        if (toAccSelect && accName) {
+          const opt = Array.from(toAccSelect.options).find(o => o.value.toLowerCase() === accName.toLowerCase());
+          if (opt) toAccSelect.value = opt.value;
+        }
+
+        const catSelect = document.getElementById('form-cat');
+        if (catSelect && activeCat && activeCat !== 'ALL') {
+          const opt = Array.from(catSelect.options).find(o => o.value.toLowerCase().includes(activeCat.toLowerCase()));
+          if (opt) catSelect.value = opt.value;
+        }
+
+        const descInput = document.getElementById('form-desc');
+        if (descInput) {
+          descInput.value = `Alokasi Dana ke ${accName}${activeCat && activeCat !== 'ALL' ? ` - ${activeCat}` : ''}`;
+        }
+      }
     }
 
     function getAccountMeta(name) {
@@ -3117,6 +3779,12 @@
                 <span class="font-semibold text-slate-600">${stats.trxCount} trx</span>
               </div>
             </div>
+
+            <div class="mt-3 pt-2.5 border-t border-slate-100">
+              <button onclick="openDetailTabunganByAccount('${escapeHtml(a.nama)}')" class="w-full py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 hover:border-indigo-200 text-indigo-700 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-2xs">
+                <i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-600"></i> Detail Tabungan / Kategori
+              </button>
+            </div>
           `;
           container.appendChild(card);
         });
@@ -3125,7 +3793,7 @@
       // Render Tabel Rincian
       tableBody.innerHTML = '';
       if (filteredAccounts.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Belum ada data rekening yang sesuai.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Belum ada data rekening yang sesuai.</td></tr>`;
       } else {
         filteredAccounts.forEach((a, idx) => {
           const stats = accountStats[a.nama.toLowerCase().trim()] || { totalIn: 0, totalOut: 0, trxCount: 0 };
@@ -3158,6 +3826,11 @@
                 ${a.saldo >= 0 ? 'Aktif' : 'Defisit'}
               </span>
             </td>
+            <td class="p-3.5 text-center">
+              <button onclick="openDetailTabunganByAccount('${escapeHtml(a.nama)}')" title="Lihat Detail Perpindahan Dana" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition inline-flex items-center gap-1 shadow-2xs">
+                <i data-lucide="layers" class="w-3.5 h-3.5"></i> Detail
+              </button>
+            </td>
           `;
           tableBody.appendChild(tr);
         });
@@ -3173,6 +3846,7 @@
             <td class="p-3.5 text-right font-bold text-rose-600 whitespace-nowrap">- ${formatIDR(grandTotalOut)}</td>
             <td class="p-3.5 text-right font-extrabold text-slate-900 text-sm whitespace-nowrap">${formatIDR(totalSaldo)}</td>
             <td class="p-3.5 text-center font-bold text-slate-700">100%</td>
+            <td></td>
             <td></td>
           </tr>
         `;
@@ -3234,6 +3908,7 @@
             fromAccount: tAccount,
             toAccount: toAccount,
             nominal: tNominal,
+            kategori: tCat,
             keterangan: tDesc || `Pindah Saldo ${tAccount} -> ${toAccount}`,
             user: currentUser.name
           };
