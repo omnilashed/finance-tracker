@@ -490,6 +490,7 @@
                         <th class="p-3.5">Nominal (Rp)</th>
                         <th class="p-3.5">Kategori / Akun</th>
                         <th class="p-3.5">Jadwal</th>
+                        <th class="p-3.5">Progress Autodebit</th>
                         <th class="p-3.5 text-center">Status Rutin</th>
                         <th class="p-3.5 text-center">Aksi</th>
                     </tr>
@@ -544,6 +545,29 @@
             <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Rekening Terdaftar</span>
             <h3 id="rek-stat-count" class="text-2xl font-bold text-indigo-600 mt-1">0 Akun</h3>
             <span class="text-[11px] text-slate-400 mt-0.5 block">Bank, e-wallet & kas tunai</span>
+          </div>
+        </div>
+
+        <!-- SECTION PROGRESS PENCAPAIAN TABUNGAN IMPIAN -->
+        <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-100 shadow-sm">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
+            <div>
+              <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                <i data-lucide="target" class="w-5 h-5 text-indigo-600"></i> Target & Progress Pencapaian Tabungan
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Pantau realisasi alokasi menabung terencana untuk Jalan-Jalan, Barang/Alat, dan Investasi secara terpisah dari Dana Darurat (SeaBank).</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-500"></i> Real-time Saldo Rekening
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="goals-cards-container">
+            <div class="col-span-full p-6 text-center text-slate-400 bg-slate-50/60 rounded-xl text-xs">
+              Sedang menyiapkan target tabungan...
+            </div>
           </div>
         </div>
 
@@ -640,7 +664,7 @@
           </div>
           <div id="wrapper-form-cat">
             <label class="font-semibold text-slate-600">Kategori</label>
-            <select id="form-cat" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-medium">
+            <select id="form-cat" onchange="handleTransferCategoryChange()" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-medium">
               <!-- Diisi otomatis oleh updateCategoryOptions() -->
             </select>
           </div>
@@ -658,11 +682,11 @@
             </select>
           </div>
           <div id="wrapper-form-to-account" class="hidden">
-            <label class="font-semibold text-slate-600 flex items-center gap-1.5 text-amber-800">
-              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-600"></i> Rekening Tujuan (Dana Darurat / Lainnya)
+            <label class="font-semibold text-slate-600 flex items-center gap-1.5 text-indigo-800">
+              <i data-lucide="arrow-right-left" class="w-3.5 h-3.5 text-indigo-600"></i> Rekening Tujuan Transfer (Tabungan / Kas / Darurat)
             </label>
-            <select id="form-to-account" class="w-full mt-1 p-2.5 border border-amber-300 rounded-xl text-xs bg-amber-50/60 focus:bg-white font-bold text-amber-900">
-              <option value="SeaBank">SeaBank (Dana Darurat)</option>
+            <select id="form-to-account" class="w-full mt-1 p-2.5 border border-indigo-200 rounded-xl text-xs bg-indigo-50/50 focus:bg-white font-bold text-indigo-950">
+              <option value="SeaBank">SeaBank</option>
               <option value="BCA">BCA</option>
               <option value="Cash">Cash / Tunai</option>
               <option value="Gopay">GoPay</option>
@@ -838,6 +862,34 @@
                 <option value="Sedekah Harian / Jumat Berkah">Sedekah Harian / Jumat Berkah</option>
                 <option value="Amal & Sosial Lainnya">Amal & Sosial Lainnya</option>
               </optgroup>
+              <optgroup label="📈 Tabungan Investasi">
+                <option value="Investasi - Saham">Investasi - Saham</option>
+                <option value="Investasi - Pasar Uang (RDPU)">Investasi - Pasar Uang (RDPU)</option>
+                <option value="Investasi - Obligasi & SBN">Investasi - Obligasi & SBN</option>
+                <option value="Investasi - Emas Logam Mulia">Investasi - Emas Logam Mulia</option>
+                <option value="Investasi - Kripto & Reksadana">Investasi - Kripto & Reksadana</option>
+                <option value="Tabungan Investasi">Tabungan Investasi (Umum)</option>
+              </optgroup>
+              <optgroup label="✈️ Tabungan Jalan-Jalan & Liburan">
+                <option value="Tabungan Jalan-Jalan - Liburan Impian">Tabungan Jalan-Jalan - Liburan Impian</option>
+                <option value="Tabungan Jalan-Jalan - Tiket & Transport">Tabungan Jalan-Jalan - Tiket & Transport</option>
+                <option value="Tabungan Jalan-Jalan - Hotel & Penginapan">Tabungan Jalan-Jalan - Hotel & Penginapan</option>
+                <option value="Tabungan Jalan-Jalan">Tabungan Jalan-Jalan (Umum)</option>
+              </optgroup>
+              <optgroup label="💻 Tabungan Barang & Alat Mahal">
+                <option value="Tabungan Barang/Alat - Laptop & Komputer">Tabungan Barang/Alat - Laptop & Komputer</option>
+                <option value="Tabungan Barang/Alat - Smartphone & Gadget">Tabungan Barang/Alat - Smartphone & Gadget</option>
+                <option value="Tabungan Barang/Alat - Kendaraan / DP Motor">Tabungan Barang/Alat - Kendaraan / DP Motor</option>
+                <option value="Tabungan Barang/Alat - Alat Kerja & Elektronik">Tabungan Barang/Alat - Alat Kerja & Elektronik</option>
+                <option value="Tabungan Barang/Alat">Tabungan Barang/Alat (Umum)</option>
+              </optgroup>
+              <optgroup label="🛡️ Dana Darurat (SeaBank Khusus)">
+                <option value="Simpanan Dana Darurat">Simpanan Dana Darurat (SeaBank)</option>
+              </optgroup>
+              <optgroup label="🛡️ Tabungan Lainnya">
+                <option value="Tabungan Masa Depan">Tabungan Masa Depan</option>
+                <option value="Asuransi">Asuransi Rutin</option>
+              </optgroup>
               <optgroup label="💳 Cicilan Utang">
                 <option value="Cicilan Utang">Cicilan Utang (Umum)</option>
                 <option value="Cicilan KPR">Cicilan KPR / Rumah</option>
@@ -856,15 +908,10 @@
                 <option value="Hiburan & Streaming">Langganan Streaming (Netflix, Spotify)</option>
                 <option value="Gaya Hidup & Hiburan">Gaya Hidup & Hiburan</option>
               </optgroup>
-              <optgroup label="🛡️ Tabungan & Darurat">
-                <option value="Simpanan Dana Darurat">Simpanan Dana Darurat (SeaBank)</option>
-                <option value="Tabungan Masa Depan">Tabungan Masa Depan</option>
-                <option value="Asuransi">Asuransi Rutin</option>
-              </optgroup>
             </select>
           </div>
           <div>
-            <label class="font-semibold text-slate-600">Rekening Pembayaran</label>
+            <label class="font-semibold text-slate-600">Rekening Pembayaran / Sumber</label>
             <select id="rutin-form-acc" class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-medium">
               <option value="Cash">Cash / Tunai</option>
               <option value="BCA">BCA</option>
@@ -872,6 +919,11 @@
               <option value="Gopay">GoPay</option>
             </select>
           </div>
+        </div>
+        <div>
+          <label class="font-semibold text-slate-600">Target Autodebit (Berapa Kali)</label>
+          <input type="number" id="rutin-form-target-kali" min="0" value="12" placeholder="12" class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-bold text-slate-800">
+          <span class="text-[10px] text-slate-400 mt-0.5 block">Contoh: 12 (untuk 12 bulan / 1 tahun), 24, dst. Isi 0 jika tanpa batas / berjalan kontinyu.</span>
         </div>
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
           <button type="button" onclick="closeModalRutin()" class="px-4 py-2 border rounded-xl hover:bg-slate-50 font-medium">Batal</button>
@@ -924,6 +976,34 @@
                 <option value="Sedekah Harian / Jumat Berkah">Sedekah Harian / Jumat Berkah</option>
                 <option value="Amal & Sosial Lainnya">Amal & Sosial Lainnya</option>
               </optgroup>
+              <optgroup label="📈 Tabungan Investasi">
+                <option value="Investasi - Saham">Investasi - Saham</option>
+                <option value="Investasi - Pasar Uang (RDPU)">Investasi - Pasar Uang (RDPU)</option>
+                <option value="Investasi - Obligasi & SBN">Investasi - Obligasi & SBN</option>
+                <option value="Investasi - Emas Logam Mulia">Investasi - Emas Logam Mulia</option>
+                <option value="Investasi - Kripto & Reksadana">Investasi - Kripto & Reksadana</option>
+                <option value="Tabungan Investasi">Tabungan Investasi (Umum)</option>
+              </optgroup>
+              <optgroup label="✈️ Tabungan Jalan-Jalan & Liburan">
+                <option value="Tabungan Jalan-Jalan - Liburan Impian">Tabungan Jalan-Jalan - Liburan Impian</option>
+                <option value="Tabungan Jalan-Jalan - Tiket & Transport">Tabungan Jalan-Jalan - Tiket & Transport</option>
+                <option value="Tabungan Jalan-Jalan - Hotel & Penginapan">Tabungan Jalan-Jalan - Hotel & Penginapan</option>
+                <option value="Tabungan Jalan-Jalan">Tabungan Jalan-Jalan (Umum)</option>
+              </optgroup>
+              <optgroup label="💻 Tabungan Barang & Alat Mahal">
+                <option value="Tabungan Barang/Alat - Laptop & Komputer">Tabungan Barang/Alat - Laptop & Komputer</option>
+                <option value="Tabungan Barang/Alat - Smartphone & Gadget">Tabungan Barang/Alat - Smartphone & Gadget</option>
+                <option value="Tabungan Barang/Alat - Kendaraan / DP Motor">Tabungan Barang/Alat - Kendaraan / DP Motor</option>
+                <option value="Tabungan Barang/Alat - Alat Kerja & Elektronik">Tabungan Barang/Alat - Alat Kerja & Elektronik</option>
+                <option value="Tabungan Barang/Alat">Tabungan Barang/Alat (Umum)</option>
+              </optgroup>
+              <optgroup label="🛡️ Dana Darurat (SeaBank Khusus)">
+                <option value="Simpanan Dana Darurat">Simpanan Dana Darurat (SeaBank)</option>
+              </optgroup>
+              <optgroup label="🛡️ Tabungan Lainnya">
+                <option value="Tabungan Masa Depan">Tabungan Masa Depan</option>
+                <option value="Asuransi">Asuransi Rutin</option>
+              </optgroup>
               <optgroup label="💳 Cicilan Utang">
                 <option value="Cicilan Utang">Cicilan Utang (Umum)</option>
                 <option value="Cicilan KPR">Cicilan KPR / Rumah</option>
@@ -942,15 +1022,10 @@
                 <option value="Hiburan & Streaming">Langganan Streaming (Netflix, Spotify)</option>
                 <option value="Gaya Hidup & Hiburan">Gaya Hidup & Hiburan</option>
               </optgroup>
-              <optgroup label="🛡️ Tabungan & Darurat">
-                <option value="Simpanan Dana Darurat">Simpanan Dana Darurat (SeaBank)</option>
-                <option value="Tabungan Masa Depan">Tabungan Masa Depan</option>
-                <option value="Asuransi">Asuransi Rutin</option>
-              </optgroup>
             </select>
           </div>
           <div>
-            <label class="font-semibold text-slate-600">Rekening Pembayaran</label>
+            <label class="font-semibold text-slate-600">Rekening Pembayaran / Sumber</label>
             <select id="edit-rutin-acc" class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-medium">
               <option value="Cash">Cash / Tunai</option>
               <option value="BCA">BCA</option>
@@ -958,6 +1033,11 @@
               <option value="Gopay">GoPay</option>
             </select>
           </div>
+        </div>
+        <div>
+          <label class="font-semibold text-slate-600">Target Autodebit (Berapa Kali)</label>
+          <input type="number" id="edit-rutin-target-kali" min="0" required class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-bold text-slate-800">
+          <span id="edit-rutin-executed-info" class="text-[10px] text-indigo-600 font-semibold mt-0.5 block">Telah tereksekusi: 0 kali. Target tidak boleh diedit kurang dari jumlah ini.</span>
         </div>
         <div>
           <label class="font-semibold text-slate-600">Status Rutin</label>
@@ -969,6 +1049,49 @@
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
           <button type="button" onclick="closeModalEditRutin()" class="px-4 py-2 border rounded-xl hover:bg-slate-50 font-medium">Batal</button>
           <button type="submit" id="btn-submit-edit-rutin" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL ATUR TARGET TABUNGAN (GOAL TRACKER) -->
+  <div id="modal-edit-goal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <i data-lucide="target" class="w-4 h-4 text-indigo-600"></i> <span id="goal-modal-title">Atur Target Tabungan</span>
+        </h3>
+        <button type="button" onclick="closeModalGoal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form onsubmit="saveGoalSettings(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="goal-key">
+        <div>
+          <label class="font-semibold text-slate-600">Nama Impian / Rencana Target</label>
+          <input type="text" id="goal-title-input" required class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-bold text-slate-800" placeholder="Contoh: Liburan ke Jepang / Laptop Asus Zenbook">
+        </div>
+        <div>
+          <label class="font-semibold text-slate-600">Target Nominal yang Dibutuhkan (Rp)</label>
+          <input type="number" id="goal-target-input" required min="10000" class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50 font-bold text-indigo-600" placeholder="10000000">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-slate-600">Target Selesai (Opsional)</label>
+            <input type="month" id="goal-date-input" class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-600">Rekening Terkait</label>
+            <input type="text" id="goal-account-name" readonly class="w-full mt-1 p-2.5 border rounded-xl bg-slate-100 text-slate-500 font-semibold">
+          </div>
+        </div>
+        <div>
+          <label class="font-semibold text-slate-600">Catatan / Rincian Rencana</label>
+          <textarea id="goal-notes-input" rows="2" class="w-full mt-1 p-2.5 border rounded-xl bg-slate-50" placeholder="Contoh: Tiket PP + hotel 5 hari / Laptop core i7..."></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModalGoal()" class="px-4 py-2 border rounded-xl hover:bg-slate-50 font-medium">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">Simpan Target</button>
         </div>
       </form>
     </div>
@@ -1424,6 +1547,8 @@
       btn.innerText = "Menyimpan...";
       btn.disabled = true;
 
+      const targetKali = parseInt(document.getElementById('rutin-form-target-kali')?.value, 10);
+
       const payload = {
         action: "addRutin",
         keterangan: document.getElementById('rutin-form-desc').value,
@@ -1431,7 +1556,8 @@
         tanggalEksekusi: document.getElementById('rutin-form-date').value,
         kategori: document.getElementById('rutin-form-cat').value,
         akun: document.getElementById('rutin-form-acc').value,
-        frekuensi: "BULANAN"
+        frekuensi: "BULANAN",
+        targetKali: isNaN(targetKali) ? 12 : targetKali
       };
 
       try {
@@ -1454,7 +1580,7 @@
     }
 
     async function deleteRutin(id) {
-      if (!confirm(`Hapus pengeluaran rutin ${id}?`)) return;
+      if (!confirm(`Hapus pengeluaran rutin ${id}?\n\nCatatan: Data transaksi yang sudah pernah terjadi / tereksekusi di Riwayat Transaksi TIDAK AKAN terhapus.`)) return;
       try {
         await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify({ action: "deleteRutin", id }) });
         fetchDashboardData();
@@ -1467,6 +1593,15 @@
 
       updateAccountDropdowns();
 
+      // Hitung berapa kali transaksi yang sudah pernah tereksekusi untuk rutin ini
+      const allTrx = appData.transactions || [];
+      const executedCount = allTrx.filter(t => {
+        return t.keterangan && (
+          t.keterangan.toLowerCase().includes(r.keterangan.toLowerCase()) || 
+          (r.id && t.keterangan.includes(r.id))
+        );
+      }).length;
+
       document.getElementById('edit-rutin-id').value = r.id;
       document.getElementById('edit-rutin-id-label').innerText = `ID: ${r.id}`;
       document.getElementById('edit-rutin-desc').value = r.keterangan || "";
@@ -1477,6 +1612,18 @@
         document.getElementById('edit-rutin-acc').value = r.akun || (appData?.accounts?.[0]?.nama || "Cash");
       }
       document.getElementById('edit-rutin-status').value = r.status || "AKTIF";
+
+      const targetInput = document.getElementById('edit-rutin-target-kali');
+      const targetVal = (r.targetKali !== undefined && r.targetKali !== null && r.targetKali !== "") ? parseInt(r.targetKali, 10) : 12;
+      if (targetInput) {
+        targetInput.value = targetVal;
+        targetInput.min = executedCount;
+        targetInput.dataset.executedCount = executedCount;
+      }
+      const infoEl = document.getElementById('edit-rutin-executed-info');
+      if (infoEl) {
+        infoEl.innerText = `Telah tereksekusi: ${executedCount} kali. Target tidak boleh diedit kurang dari ${executedCount} kali.`;
+      }
 
       const modal = document.getElementById('modal-edit-rutin');
       modal.classList.remove('hidden');
@@ -1494,6 +1641,17 @@
       e.preventDefault();
       const btn = document.getElementById('btn-submit-edit-rutin');
       const origText = btn.innerText;
+
+      const targetInput = document.getElementById('edit-rutin-target-kali');
+      const executedCount = parseInt(targetInput?.dataset?.executedCount, 10) || 0;
+      const newTarget = parseInt(targetInput?.value, 10);
+
+      // Validasi: target kali tidak boleh dikurangi kurang dari yang telah tereksekusi
+      if (!isNaN(newTarget) && newTarget > 0 && newTarget < executedCount) {
+        alert(`Target autodebit tidak boleh dikurangi menjadi kurang dari jumlah yang telah tereksekusi (${executedCount} kali)!`);
+        return;
+      }
+
       btn.innerText = "Menyimpan...";
       btn.disabled = true;
 
@@ -1507,7 +1665,8 @@
         akun: document.getElementById('edit-rutin-acc').value,
         status: document.getElementById('edit-rutin-status').value,
         tipe: "OUT",
-        frekuensi: "BULANAN"
+        frekuensi: "BULANAN",
+        targetKali: isNaN(newTarget) ? 12 : newTarget
       };
 
       try {
@@ -1547,14 +1706,26 @@
         return "Amal & Kebaikan";
       }
 
-      // 2. Cicilan Utang
+      // 2. Tabungan & Darurat (Pemisahan: Dana Darurat SeaBank, Tabungan Investasi, Tabungan Jalan-Jalan, Tabungan Barang/Alat)
+      if (s.includes("tabungan") || s.includes("darurat") || s.includes("seabank") || 
+          s.includes("investasi") || s.includes("saham") || s.includes("pasar uang") || 
+          s.includes("rdpu") || s.includes("obligasi") || s.includes("sbn") || 
+          s.includes("emas") || s.includes("reksadana") || s.includes("kripto") || 
+          s.includes("jalan-jalan") || s.includes("jalan jalan") || s.includes("barang/alat") || 
+          s.includes("barang & alat") || s.includes("asuransi") || s.includes("simpanan") ||
+          s.includes("gaji") || s.includes("dana tambahan") || s.includes("uang sampingan") ||
+          s.includes("thr") || s.includes("bonus") || s.includes("pendapatan")) {
+        return "Tabungan & Darurat";
+      }
+
+      // 3. Cicilan Utang
       if (s.includes("utang") || s.includes("hutang") || s.includes("cicilan") || 
           s.includes("kpr") || s.includes("paylater") || s.includes("pinjaman") || 
           s.includes("kartu kredit") || s.includes("kendaraan") || s.includes("elektronik")) {
         return "Cicilan Utang";
       }
 
-      // 3. Gaya Hidup & Hiburan
+      // 4. Gaya Hidup & Hiburan
       if (s.includes("ngopi") || s.includes("cafe") || s.includes("kafe") || 
           s.includes("hangout") || s.includes("nongkrong") || s.includes("makan di luar") || 
           s.includes("makan diluar") || s.includes("jajan") || s.includes("hobi") || 
@@ -1563,15 +1734,6 @@
           s.includes("netflix") || s.includes("spotify") || s.includes("self care") || 
           s.includes("salon") || s.includes("perawatan") || s.includes("gaya hidup")) {
         return "Gaya Hidup & Hiburan";
-      }
-
-      // 4. Tabungan & Darurat
-      if (s.includes("tabungan") || s.includes("darurat") || s.includes("investasi") || 
-          s.includes("emas") || s.includes("seabank") || s.includes("saham") || 
-          s.includes("reksadana") || s.includes("asuransi") || s.includes("simpanan") ||
-          s.includes("gaji") || s.includes("dana tambahan") || s.includes("uang sampingan") ||
-          s.includes("thr") || s.includes("bonus") || s.includes("pendapatan")) {
-        return "Tabungan & Darurat";
       }
 
       // 5. Kebutuhan Pokok (Default)
@@ -1594,6 +1756,36 @@
             <option value="Donasi Bencana & Kemanusiaan">Donasi Bencana & Kemanusiaan</option>
             <option value="Sedekah Harian / Jumat Berkah">Sedekah Harian / Jumat Berkah</option>
             <option value="Amal & Sosial Lainnya">Amal & Sosial Lainnya</option>
+          </optgroup>
+          <optgroup label="📈 Tabungan Investasi">
+            <option value="Investasi - Saham">Investasi - Saham</option>
+            <option value="Investasi - Pasar Uang (RDPU)">Investasi - Pasar Uang (RDPU)</option>
+            <option value="Investasi - Obligasi & SBN">Investasi - Obligasi & SBN</option>
+            <option value="Investasi - Emas Logam Mulia">Investasi - Emas Logam Mulia</option>
+            <option value="Investasi - Kripto & Reksadana">Investasi - Kripto & Reksadana</option>
+            <option value="Tabungan Investasi">Tabungan Investasi (Umum)</option>
+          </optgroup>
+          <optgroup label="✈️ Tabungan Jalan-Jalan & Liburan">
+            <option value="Tabungan Jalan-Jalan - Liburan Impian">Tabungan Jalan-Jalan - Liburan Impian</option>
+            <option value="Tabungan Jalan-Jalan - Tiket & Transport">Tabungan Jalan-Jalan - Tiket & Transport</option>
+            <option value="Tabungan Jalan-Jalan - Hotel & Penginapan">Tabungan Jalan-Jalan - Hotel & Penginapan</option>
+            <option value="Tabungan Jalan-Jalan - Dana Wisata & Kuliner">Tabungan Jalan-Jalan - Dana Wisata & Kuliner</option>
+            <option value="Tabungan Jalan-Jalan">Tabungan Jalan-Jalan (Umum)</option>
+          </optgroup>
+          <optgroup label="💻 Tabungan Barang & Alat Mahal">
+            <option value="Tabungan Barang/Alat - Laptop & Komputer">Tabungan Barang/Alat - Laptop & Komputer</option>
+            <option value="Tabungan Barang/Alat - Smartphone & Gadget">Tabungan Barang/Alat - Smartphone & Gadget</option>
+            <option value="Tabungan Barang/Alat - Kendaraan / DP Motor">Tabungan Barang/Alat - Kendaraan / DP Motor</option>
+            <option value="Tabungan Barang/Alat - Alat Kerja & Elektronik">Tabungan Barang/Alat - Alat Kerja & Elektronik</option>
+            <option value="Tabungan Barang/Alat - Kamera & Hobi">Tabungan Barang/Alat - Kamera & Hobi</option>
+            <option value="Tabungan Barang/Alat">Tabungan Barang/Alat (Umum)</option>
+          </optgroup>
+          <optgroup label="🛡️ Dana Darurat (SeaBank Khusus)">
+            <option value="Simpanan Dana Darurat">Simpanan Dana Darurat (SeaBank)</option>
+          </optgroup>
+          <optgroup label="🛡️ Tabungan Lainnya">
+            <option value="Tabungan Masa Depan">Tabungan Masa Depan</option>
+            <option value="Asuransi">Asuransi</option>
           </optgroup>
           <optgroup label="🏠 Kebutuhan Pokok">
             <option value="Konsumsi">Konsumsi (Makan & Minum Harian)</option>
@@ -1621,22 +1813,36 @@
             <option value="Hiburan & Streaming">Hiburan & Streaming (Netflix, Spotify)</option>
             <option value="Liburan & Rekreasi">Liburan & Rekreasi</option>
           </optgroup>
-          <optgroup label="🛡️ Tabungan & Darurat (Penyisihan)">
-            <option value="Simpanan Dana Darurat">Simpanan Dana Darurat (SeaBank)</option>
-            <option value="Tabungan Masa Depan">Tabungan Masa Depan</option>
-            <option value="Investasi">Investasi (Emas / Saham / Reksadana)</option>
-            <option value="Asuransi">Asuransi</option>
-          </optgroup>
         `;
       } else if (type === 'TRANSFER') {
         return `
-          <optgroup label="🛡️ Dana Darurat & Tabungan">
-            <option value="Simpanan Dana Darurat">Alokasi Dana Darurat (SeaBank)</option>
-            <option value="Tabungan Masa Depan">Tabungan Masa Depan</option>
-            <option value="Investasi">Investasi / Emas / Saham</option>
+          <optgroup label="📈 Ke Tabungan Investasi">
+            <option value="Transfer ke Investasi - Saham">Transfer ke Investasi - Saham</option>
+            <option value="Transfer ke Investasi - Pasar Uang (RDPU)">Transfer ke Investasi - Pasar Uang (RDPU)</option>
+            <option value="Transfer ke Investasi - Obligasi & SBN">Transfer ke Investasi - Obligasi & SBN</option>
+            <option value="Transfer ke Investasi - Emas Logam Mulia">Transfer ke Investasi - Emas Logam Mulia</option>
+            <option value="Transfer ke Investasi - Kripto / Reksadana">Transfer ke Investasi - Kripto / Reksadana</option>
+            <option value="Transfer ke Tabungan Investasi">Transfer ke Tabungan Investasi (Umum)</option>
           </optgroup>
-          <optgroup label="⇄ Mutasi Kas & Rekening">
+          <optgroup label="✈️ Ke Tabungan Jalan-Jalan & Liburan">
+            <option value="Transfer ke Tabungan Jalan-Jalan">Transfer ke Tabungan Jalan-Jalan & Liburan</option>
+            <option value="Transfer ke Jalan-Jalan - Tiket & Transport">Transfer ke Jalan-Jalan - Tiket & Transport</option>
+            <option value="Transfer ke Jalan-Jalan - Hotel & Staycation">Transfer ke Jalan-Jalan - Hotel & Staycation</option>
+            <option value="Transfer ke Jalan-Jalan - Wisata & Kuliner">Transfer ke Jalan-Jalan - Wisata & Kuliner</option>
+          </optgroup>
+          <optgroup label="💻 Ke Tabungan Barang & Alat Mahal">
+            <option value="Transfer ke Tabungan Barang/Alat">Transfer ke Tabungan Barang/Alat (Umum)</option>
+            <option value="Transfer ke Barang/Alat - Laptop & PC">Transfer ke Barang/Alat - Laptop & PC</option>
+            <option value="Transfer ke Barang/Alat - Smartphone & Gadget">Transfer ke Barang/Alat - Smartphone & Gadget</option>
+            <option value="Transfer ke Barang/Alat - Motor / Kendaraan">Transfer ke Barang/Alat - Kendaraan / DP Motor</option>
+            <option value="Transfer ke Barang/Alat - Elektronik & Alat Kerja">Transfer ke Barang/Alat - Elektronik & Alat Kerja</option>
+          </optgroup>
+          <optgroup label="🛡️ Dana Darurat (SeaBank Khusus)">
+            <option value="Simpanan Dana Darurat">Alokasi Dana Darurat (SeaBank)</option>
+          </optgroup>
+          <optgroup label="⇄ Mutasi Kas & Antar Rekening">
             <option value="Transfer">Transfer Antar Rekening</option>
+            <option value="Tabungan Masa Depan">Tabungan Masa Depan</option>
             <option value="Tarik Tunai">Tarik Tunai (Bank -> Tunai)</option>
             <option value="Setor Tunai">Setor Tunai (Tunai -> Bank)</option>
           </optgroup>
@@ -1652,6 +1858,28 @@
             <option value="Pendapatan Lainnya">Pendapatan Lainnya</option>
           </optgroup>
         `;
+      }
+    }
+
+    function handleTransferCategoryChange() {
+      const type = document.getElementById('form-type')?.value;
+      if (type !== 'TRANSFER') return;
+      const cat = (document.getElementById('form-cat')?.value || '').toLowerCase();
+      const toAccSelect = document.getElementById('form-to-account');
+      if (!toAccSelect) return;
+
+      if (cat.includes('investasi') || cat.includes('saham') || cat.includes('pasar uang') || cat.includes('obligasi') || cat.includes('emas') || cat.includes('kripto') || cat.includes('sbn') || cat.includes('rdpu')) {
+        const opt = Array.from(toAccSelect.options).find(o => o.value.toLowerCase().includes('investasi'));
+        if (opt) toAccSelect.value = opt.value;
+      } else if (cat.includes('jalan') || cat.includes('liburan') || cat.includes('wisata') || cat.includes('tiket') || cat.includes('staycation') || cat.includes('hotel')) {
+        const opt = Array.from(toAccSelect.options).find(o => o.value.toLowerCase().includes('jalan'));
+        if (opt) toAccSelect.value = opt.value;
+      } else if (cat.includes('barang') || cat.includes('alat') || cat.includes('laptop') || cat.includes('gadget') || cat.includes('elektronik') || cat.includes('hp') || cat.includes('pc') || cat.includes('motor') || cat.includes('kamera')) {
+        const opt = Array.from(toAccSelect.options).find(o => o.value.toLowerCase().includes('barang') || o.value.toLowerCase().includes('alat'));
+        if (opt) toAccSelect.value = opt.value;
+      } else if (cat.includes('darurat') || cat.includes('seabank')) {
+        const opt = Array.from(toAccSelect.options).find(o => o.value.toLowerCase().includes('seabank'));
+        if (opt) toAccSelect.value = opt.value;
       }
     }
 
@@ -1672,12 +1900,7 @@
         if (splitBox) splitBox.classList.add('hidden');
         if (toAccRow) toAccRow.classList.remove('hidden');
         if (lblAccount) lblAccount.innerText = "Dari Rekening (Asal / Sumber Dana)";
-        // Set default tujuan ke SeaBank jika ada
-        const toAccSelect = document.getElementById('form-to-account');
-        if (toAccSelect) {
-          const seaBankOpt = Array.from(toAccSelect.options).find(o => o.value.toLowerCase().includes('seabank'));
-          if (seaBankOpt) toAccSelect.value = seaBankOpt.value;
-        }
+        handleTransferCategoryChange();
       } else {
         if (splitBox) splitBox.classList.add('hidden');
         if (toAccRow) toAccRow.classList.add('hidden');
@@ -1827,7 +2050,7 @@
         {
           key: "Tabungan & Darurat",
           icon: "shield-check",
-          desc: "Alokasi dana darurat (SeaBank), tabungan masa depan & investasi",
+          desc: "Pemisahan terstruktur: Dana Darurat (SeaBank), Tabungan Investasi, Tabungan Jalan-Jalan, dan Tabungan Barang/Alat",
           colorTheme: "emerald",
           borderClass: "border-emerald-100",
           bgClass: "bg-emerald-50/40",
@@ -2054,7 +2277,7 @@
       
       const rutins = appData.rutins || [];
       if (rutins.length === 0) {
-        return tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Belum ada tagihan rutin bulanan. Klik tombol "+ Tambah Tagihan Rutin" untuk menambahkan.</td></tr>`;
+        return tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Belum ada tagihan rutin bulanan. Klik tombol "+ Tambah Tagihan Rutin" untuk menambahkan.</td></tr>`;
       }
 
       const now = new Date();
@@ -2064,9 +2287,51 @@
       rutins.forEach(r => {
         const tr = document.createElement('tr');
         const isAktif = r.status === 'AKTIF';
-        const statusBadge = isAktif
-          ? `<button onclick="toggleStatusRutin('${r.id}')" class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-md text-[10px] font-bold hover:bg-emerald-200">AKTIF</button>`
-          : `<button onclick="toggleStatusRutin('${r.id}')" class="px-2 py-1 bg-slate-100 text-slate-500 rounded-md text-[10px] font-bold hover:bg-slate-200">NONAKTIF</button>`;
+        const isSelesai = r.status === 'SELESAI';
+        
+        let statusBadge = '';
+        if (isSelesai) {
+          statusBadge = `<span class="px-2 py-1 bg-purple-100 text-purple-800 rounded-md text-[10px] font-bold border border-purple-200">SELESAI</span>`;
+        } else if (isAktif) {
+          statusBadge = `<button onclick="toggleStatusRutin('${r.id}')" class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-md text-[10px] font-bold hover:bg-emerald-200">AKTIF</button>`;
+        } else {
+          statusBadge = `<button onclick="toggleStatusRutin('${r.id}')" class="px-2 py-1 bg-slate-100 text-slate-500 rounded-md text-[10px] font-bold hover:bg-slate-200">NONAKTIF</button>`;
+        }
+
+        // Cek riwayat transaksi yang sudah tereksekusi untuk rutin ini
+        const executedCount = allTrx.filter(t => {
+          return t.keterangan && (
+            t.keterangan.toLowerCase().includes(r.keterangan.toLowerCase()) || 
+            (r.id && t.keterangan.includes(r.id))
+          );
+        }).length;
+
+        const targetKali = (r.targetKali !== undefined && r.targetKali !== null && r.targetKali !== "" && !isNaN(parseInt(r.targetKali, 10))) ? parseInt(r.targetKali, 10) : 12;
+
+        let progressBadge = '';
+        if (targetKali > 0) {
+          const isTargetReached = executedCount >= targetKali;
+          const pct = Math.min(Math.round((executedCount / targetKali) * 100), 100);
+          progressBadge = `
+            <div>
+              <div class="flex items-center justify-between text-[11px] font-bold">
+                <span class="${isTargetReached ? 'text-emerald-700 font-extrabold' : 'text-slate-700'}">${executedCount} / ${targetKali} kali</span>
+                <span class="${isTargetReached ? 'text-emerald-600 font-extrabold' : 'text-indigo-600'}">${pct}%</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden">
+                <div class="h-1.5 rounded-full ${isTargetReached ? 'bg-emerald-500' : 'bg-indigo-600'}" style="width: ${pct}%"></div>
+              </div>
+              ${isTargetReached ? '<span class="inline-block text-[10px] text-emerald-600 font-bold mt-0.5">🎉 Target Terpenuhi</span>' : ''}
+            </div>
+          `;
+        } else {
+          progressBadge = `
+            <div>
+              <span class="text-xs font-bold text-slate-700">${executedCount} kali</span>
+              <span class="block text-[10px] text-slate-400 font-medium">Kontinyu (Tanpa Batas)</span>
+            </div>
+          `;
+        }
 
         // Cek apakah sudah terbit di bulan ini
         const alreadyRecorded = allTrx.some(t => {
@@ -2090,6 +2355,7 @@
           <td class="p-3.5 font-bold text-rose-600 whitespace-nowrap">${formatIDR(r.nominal)}</td>
           <td class="p-3.5 text-slate-500">${r.kategori} <br/><span class="text-[10px] bg-slate-100 px-1 rounded border">Via: ${r.akun}</span></td>
           <td class="p-3.5 text-indigo-700 font-medium whitespace-nowrap">Tiap Tgl ${r.execDate} <br/><span class="text-[10px] text-slate-400">(${r.freq})</span></td>
+          <td class="p-3.5 w-36">${progressBadge}</td>
           <td class="p-3.5 text-center">${statusBadge}</td>
           <td class="p-3.5 text-center whitespace-nowrap">
             <button onclick="openEditRutin('${r.id}')" class="text-indigo-600 hover:text-indigo-900 font-semibold text-xs mr-2 transition">Edit</button>
@@ -2297,6 +2563,7 @@
         appData = await res.json();
 
         if (appData.success) {
+          ensureSavingsAccounts();
           initDashboardDateFilter();
           updateAccountDropdowns();
           updateStats();
@@ -2306,6 +2573,7 @@
           renderSalarySources();
           renderBudgetPlannerList();
           renderRekeningTab();
+          renderSavingsGoals();
         }
       } catch (err) { console.error(err); }
     }
@@ -2447,14 +2715,267 @@
     }
 
     // ==========================================
-    // DATA REKENING TERUPDATE DARI SHEET REKENING
+    // DATA REKENING & TARGET TABUNGAN IMPIAN
     // ==========================================
+    function ensureSavingsAccounts() {
+      if (!appData.accounts) appData.accounts = [];
+      const required = [
+        { nama: "Tabungan Investasi", saldoAwal: 0, saldo: 0 },
+        { nama: "Tabungan Jalan-Jalan", saldoAwal: 0, saldo: 0 },
+        { nama: "Tabungan Barang/Alat", saldoAwal: 0, saldo: 0 }
+      ];
+      required.forEach(req => {
+        const exists = appData.accounts.some(a => a.nama.toLowerCase().trim() === req.nama.toLowerCase().trim());
+        if (!exists) {
+          appData.accounts.push({ ...req });
+        }
+      });
+    }
+
+    function getSavingsGoals() {
+      const defaultGoals = {
+        jalanJalan: {
+          key: "jalanJalan",
+          title: "Liburan & Jalan-Jalan Impian",
+          target: 10000000,
+          targetDate: "",
+          notes: "Tiket pesawat, akomodasi hotel & uang saku wisata keluarga",
+          account: "Tabungan Jalan-Jalan",
+          icon: "plane",
+          theme: {
+            bgLight: "bg-sky-50/60",
+            border: "border-sky-100",
+            badge: "bg-sky-100 text-sky-800",
+            bar: "bg-sky-500",
+            btn: "bg-sky-600 hover:bg-sky-700 text-white",
+            text: "text-sky-700"
+          }
+        },
+        barangAlat: {
+          key: "barangAlat",
+          title: "Beli Laptop / Gadget & Alat Kerja",
+          target: 15000000,
+          targetDate: "",
+          notes: "Upgrade laptop kerja, gadget impian atau peralatan mahal",
+          account: "Tabungan Barang/Alat",
+          icon: "laptop",
+          theme: {
+            bgLight: "bg-purple-50/60",
+            border: "border-purple-100",
+            badge: "bg-purple-100 text-purple-800",
+            bar: "bg-purple-600",
+            btn: "bg-purple-600 hover:bg-purple-700 text-white",
+            text: "text-purple-700"
+          }
+        },
+        investasi: {
+          key: "investasi",
+          title: "Portofolio Tabungan Investasi",
+          target: 25000000,
+          targetDate: "",
+          notes: "Alokasi rutin ke saham, pasar uang (RDPU), obligasi/SBN, dan emas",
+          account: "Tabungan Investasi",
+          icon: "trending-up",
+          theme: {
+            bgLight: "bg-emerald-50/60",
+            border: "border-emerald-100",
+            badge: "bg-emerald-100 text-emerald-800",
+            bar: "bg-emerald-600",
+            btn: "bg-emerald-600 hover:bg-emerald-700 text-white",
+            text: "text-emerald-700"
+          }
+        }
+      };
+
+      try {
+        const saved = localStorage.getItem('family_savings_goals');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return {
+            jalanJalan: { ...defaultGoals.jalanJalan, ...(parsed.jalanJalan || {}) },
+            barangAlat: { ...defaultGoals.barangAlat, ...(parsed.barangAlat || {}) },
+            investasi: { ...defaultGoals.investasi, ...(parsed.investasi || {}) }
+          };
+        }
+      } catch (e) {}
+      return defaultGoals;
+    }
+
+    function saveGoalSettings(e) {
+      e.preventDefault();
+      const key = document.getElementById('goal-key').value;
+      if (!key) return;
+
+      const currentGoals = getSavingsGoals();
+      currentGoals[key] = {
+        ...currentGoals[key],
+        title: document.getElementById('goal-title-input').value,
+        target: parseFloat(document.getElementById('goal-target-input').value) || 0,
+        targetDate: document.getElementById('goal-date-input').value || "",
+        notes: document.getElementById('goal-notes-input').value || ""
+      };
+
+      localStorage.setItem('family_savings_goals', JSON.stringify(currentGoals));
+      closeModalGoal();
+      renderSavingsGoals();
+    }
+
+    function openEditGoal(key) {
+      const goals = getSavingsGoals();
+      const g = goals[key];
+      if (!g) return;
+
+      document.getElementById('goal-key').value = key;
+      document.getElementById('goal-modal-title').innerText = `Atur Target: ${g.account}`;
+      document.getElementById('goal-title-input').value = g.title || "";
+      document.getElementById('goal-target-input').value = g.target || 0;
+      document.getElementById('goal-date-input').value = g.targetDate || "";
+      document.getElementById('goal-account-name').value = g.account || "";
+      document.getElementById('goal-notes-input').value = g.notes || "";
+
+      const modal = document.getElementById('modal-edit-goal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeModalGoal() {
+      const modal = document.getElementById('modal-edit-goal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function openNabungSekarang(goalKey) {
+      openModalTrx();
+      const formType = document.getElementById('form-type');
+      if (formType) {
+        formType.value = 'TRANSFER';
+        updateCategoryOptions();
+      }
+
+      const toAccSelect = document.getElementById('form-to-account');
+      const descInput = document.getElementById('form-desc');
+      const catSelect = document.getElementById('form-cat');
+
+      if (goalKey === 'jalanJalan') {
+        if (toAccSelect) {
+          const opt = Array.from(toAccSelect.options).find(o => o.value.toLowerCase().includes('jalan'));
+          if (opt) toAccSelect.value = opt.value;
+        }
+        if (catSelect) {
+          const opt = Array.from(catSelect.options).find(o => o.value.toLowerCase().includes('jalan'));
+          if (opt) catSelect.value = opt.value;
+        }
+        if (descInput) descInput.value = "Nabung Alokasi Liburan & Jalan-Jalan";
+      } else if (goalKey === 'barangAlat') {
+        if (toAccSelect) {
+          const opt = Array.from(toAccSelect.options).find(o => o.value.toLowerCase().includes('barang') || o.value.toLowerCase().includes('alat'));
+          if (opt) toAccSelect.value = opt.value;
+        }
+        if (catSelect) {
+          const opt = Array.from(catSelect.options).find(o => o.value.toLowerCase().includes('barang') || o.value.toLowerCase().includes('alat'));
+          if (opt) catSelect.value = opt.value;
+        }
+        if (descInput) descInput.value = "Nabung Alokasi Barang/Alat Mahal";
+      } else if (goalKey === 'investasi') {
+        if (toAccSelect) {
+          const opt = Array.from(toAccSelect.options).find(o => o.value.toLowerCase().includes('investasi'));
+          if (opt) toAccSelect.value = opt.value;
+        }
+        if (catSelect) {
+          const opt = Array.from(catSelect.options).find(o => o.value.toLowerCase().includes('investasi'));
+          if (opt) catSelect.value = opt.value;
+        }
+        if (descInput) descInput.value = "Nabung Alokasi Investasi (Saham/Emas/SBN)";
+      }
+      lucide.createIcons();
+    }
+
+    function renderSavingsGoals() {
+      const container = document.getElementById('goals-cards-container');
+      if (!container) return;
+
+      const goals = getSavingsGoals();
+      const accounts = appData?.accounts || [];
+      container.innerHTML = '';
+
+      Object.keys(goals).forEach(k => {
+        const g = goals[k];
+        const acc = accounts.find(a => a.nama.toLowerCase().includes(g.account.toLowerCase().replace('tabungan ', ''))) || { saldo: 0 };
+        const saldo = parseFloat(acc.saldo) || 0;
+        const target = parseFloat(g.target) || 1;
+        const pct = Math.min((saldo / target) * 100, 100);
+        const sisa = Math.max(target - saldo, 0);
+        const isReached = saldo >= target && target > 0;
+
+        const card = document.createElement('div');
+        card.className = `p-5 rounded-2xl border ${g.theme.border} ${g.theme.bgLight} flex flex-col justify-between relative shadow-xs hover:shadow-md transition`;
+        card.innerHTML = `
+          <div>
+            <div class="flex items-start justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-8 h-8 rounded-xl bg-white shadow-xs flex items-center justify-center ${g.theme.text} flex-shrink-0">
+                  <i data-lucide="${g.icon}" class="w-4 h-4"></i>
+                </span>
+                <div class="min-w-0">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${g.theme.badge} inline-block uppercase tracking-wider">${g.account}</span>
+                  <h4 class="font-bold text-slate-800 text-sm leading-snug mt-0.5 truncate">${g.title}</h4>
+                </div>
+              </div>
+              <button onclick="openEditGoal('${k}')" title="Atur Target" class="text-slate-400 hover:text-indigo-600 transition p-1 rounded-lg hover:bg-white/80">
+                <i data-lucide="settings" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <p class="text-[11px] text-slate-500 mb-4 line-clamp-2">${g.notes || '-'}</p>
+
+            <div class="space-y-1.5">
+              <div class="flex justify-between items-baseline text-xs">
+                <span class="text-[10px] text-slate-400 font-semibold uppercase">Saldo Terkumpul</span>
+                <span class="font-black text-slate-900 text-sm font-mono">${formatIDR(saldo)}</span>
+              </div>
+              <div class="flex justify-between items-baseline text-xs">
+                <span class="text-[10px] text-slate-400 font-medium">Target Dana:</span>
+                <span class="font-semibold text-slate-600 text-xs font-mono">${formatIDR(target)}</span>
+              </div>
+
+              <div class="w-full bg-slate-200/80 rounded-full h-2 mt-2 overflow-hidden">
+                <div class="h-2 rounded-full ${isReached ? 'bg-emerald-500' : g.theme.bar} transition-all duration-500" style="width: ${pct}%"></div>
+              </div>
+
+              <div class="flex justify-between items-center text-[10px] pt-1">
+                <span class="font-bold ${isReached ? 'text-emerald-700' : g.theme.text}">${pct.toFixed(1)}% Tercapai</span>
+                <span class="text-slate-500">${isReached ? '🎉 Selesai!' : `Sisa ${formatIDR(sisa)}`}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between gap-2">
+            <button onclick="openEditGoal('${k}')" class="text-xs font-semibold text-slate-600 hover:text-indigo-700 transition flex items-center gap-1">
+              <i data-lucide="edit-2" class="w-3 h-3"></i> Atur Target
+            </button>
+            <button onclick="openNabungSekarang('${k}')" class="px-3 py-1.5 rounded-xl ${g.theme.btn} font-bold text-xs shadow-sm transition flex items-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Nabung Sekarang
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
     function getAccountMeta(name) {
       const n = (name || '').toLowerCase();
-      if (n.includes('bca')) {
+      if (n.includes('seabank')) {
+        return { type: 'Dana Darurat (SeaBank Khusus)', icon: 'shield-alert', bgColor: 'bg-amber-50', textColor: 'text-amber-700', badgeColor: 'bg-amber-100 text-amber-900 font-bold', barColor: 'bg-amber-500' };
+      } else if (n.includes('investasi')) {
+        return { type: 'Tabungan Investasi', icon: 'trending-up', bgColor: 'bg-emerald-50', textColor: 'text-emerald-700', badgeColor: 'bg-emerald-100 text-emerald-800 font-bold', barColor: 'bg-emerald-600' };
+      } else if (n.includes('jalan') || n.includes('liburan') || n.includes('wisata')) {
+        return { type: 'Tabungan Jalan-Jalan', icon: 'plane', bgColor: 'bg-sky-50', textColor: 'text-sky-700', badgeColor: 'bg-sky-100 text-sky-800 font-bold', barColor: 'bg-sky-500' };
+      } else if (n.includes('barang') || n.includes('alat') || n.includes('gadget') || n.includes('elektronik')) {
+        return { type: 'Tabungan Barang/Alat', icon: 'laptop', bgColor: 'bg-purple-50', textColor: 'text-purple-700', badgeColor: 'bg-purple-100 text-purple-800 font-bold', barColor: 'bg-purple-600' };
+      } else if (n.includes('bca')) {
         return { type: 'Bank BCA', icon: 'credit-card', bgColor: 'bg-blue-50', textColor: 'text-blue-600', badgeColor: 'bg-blue-100 text-blue-800', barColor: 'bg-blue-600' };
-      } else if (n.includes('seabank')) {
-        return { type: 'SeaBank (Dana Darurat)', icon: 'shield-check', bgColor: 'bg-amber-50', textColor: 'text-amber-600', badgeColor: 'bg-amber-100 text-amber-800', barColor: 'bg-amber-500' };
       } else if (n.includes('mandiri')) {
         return { type: 'Bank Mandiri', icon: 'credit-card', bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', badgeColor: 'bg-yellow-100 text-yellow-800', barColor: 'bg-yellow-600' };
       } else if (n.includes('bri')) {
@@ -2665,6 +3186,7 @@
         lastSyncEl.innerText = `Terakhir sinkron: ${timeStr} WIB`;
       }
 
+      renderSavingsGoals();
       lucide.createIcons();
     }
 
