@@ -1408,6 +1408,7 @@
     // ==========================================
 
     function openModalRutin() {
+      updateAccountDropdowns();
       document.getElementById('modal-rutin').classList.remove('hidden');
       document.getElementById('modal-rutin').classList.add('flex');
     }
@@ -1464,13 +1465,17 @@
       const r = (appData.rutins || []).find(item => item.id === id);
       if (!r) return alert("Data rutin tidak ditemukan.");
 
+      updateAccountDropdowns();
+
       document.getElementById('edit-rutin-id').value = r.id;
       document.getElementById('edit-rutin-id-label').innerText = `ID: ${r.id}`;
       document.getElementById('edit-rutin-desc').value = r.keterangan || "";
       document.getElementById('edit-rutin-nominal').value = r.nominal || 0;
       document.getElementById('edit-rutin-date').value = r.execDate || 1;
       document.getElementById('edit-rutin-cat').value = r.kategori || "Cicilan Utang";
-      document.getElementById('edit-rutin-acc').value = r.akun || "BCA";
+      if (document.getElementById('edit-rutin-acc')) {
+        document.getElementById('edit-rutin-acc').value = r.akun || (appData?.accounts?.[0]?.nama || "Cash");
+      }
       document.getElementById('edit-rutin-status').value = r.status || "AKTIF";
 
       const modal = document.getElementById('modal-edit-rutin');
@@ -2255,7 +2260,14 @@
       const accounts = appData?.accounts || [];
       if (accounts.length === 0) return;
 
-      const targetSelectIds = ['form-account', 'form-to-account', 'split-target-account', 'edit-form-account', 'rutin-form-akun', 'edit-rutin-acc'];
+      const targetSelectIds = [
+        'form-account', 
+        'form-to-account', 
+        'split-target-account', 
+        'edit-trx-account', 
+        'rutin-form-acc', 
+        'edit-rutin-acc'
+      ];
       targetSelectIds.forEach(id => {
         const sel = document.getElementById(id);
         if (!sel) return;
@@ -2755,6 +2767,7 @@
     }
 
     function openModalTrx() { 
+      updateAccountDropdowns();
       document.getElementById('form-date').valueAsDate = new Date(); 
       const formType = document.getElementById('form-type');
       if (formType) formType.value = 'OUT';
@@ -2787,6 +2800,8 @@
       const list = appData.transactions || [];
       const t = list.find(item => (id && item.id === id) || (rowIndex && item.rowIndex === rowIndex));
       if (!t) return alert("Data transaksi tidak ditemukan.");
+
+      updateAccountDropdowns();
 
       document.getElementById('edit-trx-id').value = t.id || "";
       document.getElementById('edit-trx-row-index').value = t.rowIndex || "";
