@@ -186,7 +186,7 @@
         </div>
 
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div class="p-4 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
             <div>
               <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
                 Riwayat Transaksi Terkini
@@ -194,13 +194,44 @@
               </h3>
               <p id="trx-filter-desc" class="text-xs text-slate-400 mt-0.5">Menampilkan semua transaksi</p>
             </div>
-            <button onclick="fetchDashboardData()" class="text-xs text-indigo-600 hover:underline flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh</button>
+
+            <!-- SEARCH KETERANGAN & SORT DATE CONTROLS -->
+            <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+              <!-- Search Keterangan -->
+              <div class="relative flex-1 sm:w-64">
+                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400"></i>
+                <input type="text" id="trx-search" oninput="applyDashboardFilter()" placeholder="Cari keterangan..." class="w-full pl-8 pr-7 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 font-medium text-slate-700">
+                <button type="button" onclick="clearTrxSearch()" id="btn-clear-search" class="hidden absolute right-2 top-1.5 text-slate-400 hover:text-slate-600 p-0.5" title="Hapus pencarian">
+                  <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+
+              <!-- Sort Date Dropdown -->
+              <div class="flex items-center gap-1.5">
+                <label for="trx-sort-date" class="text-[11px] font-semibold text-slate-400 whitespace-nowrap flex items-center gap-1">
+                  <i data-lucide="arrow-up-down" class="w-3 h-3 text-indigo-600"></i> Urutan:
+                </label>
+                <select id="trx-sort-date" onchange="applyDashboardFilter()" class="px-2.5 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 font-semibold text-indigo-700 focus:bg-white focus:ring-2 focus:ring-indigo-500">
+                  <option value="DESC">Terbaru (DESC)</option>
+                  <option value="ASC">Terlama (ASC)</option>
+                </select>
+              </div>
+
+              <button onclick="fetchDashboardData()" class="px-2.5 py-1.5 text-xs text-indigo-600 hover:bg-indigo-50 rounded-xl font-semibold flex items-center gap-1 transition" title="Muat ulang data">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
+              </button>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs sm:text-sm">
               <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[11px] tracking-wider">
                 <tr>
-                  <th class="p-3.5">Tanggal</th>
+                  <th class="p-3.5 cursor-pointer select-none hover:text-indigo-600 transition" onclick="toggleDateSort()" title="Klik untuk ubah urutan Tanggal">
+                    <span class="flex items-center gap-1">
+                      Tanggal
+                      <i id="sort-date-icon" data-lucide="arrow-down" class="w-3.5 h-3.5 text-indigo-600"></i>
+                    </span>
+                  </th>
                   <th class="p-3.5">User</th>
                   <th class="p-3.5">Keterangan</th>
                   <th class="p-3.5">Kategori</th>
@@ -2130,10 +2161,31 @@
       const monthSelect = document.getElementById('filter-month');
       const yearSelect = document.getElementById('filter-year');
       const userSelect = document.getElementById('user-filter');
+      const searchInput = document.getElementById('trx-search');
+      const sortSelect = document.getElementById('trx-sort-date');
+
       if (monthSelect) monthSelect.value = 'ALL';
       if (yearSelect) yearSelect.value = 'ALL';
       if (userSelect) userSelect.value = 'ALL';
+      if (searchInput) searchInput.value = '';
+      if (sortSelect) sortSelect.value = 'DESC';
       applyDashboardFilter();
+    }
+
+    function clearTrxSearch() {
+      const input = document.getElementById('trx-search');
+      if (input) {
+        input.value = '';
+        applyDashboardFilter();
+      }
+    }
+
+    function toggleDateSort() {
+      const sortSelect = document.getElementById('trx-sort-date');
+      if (sortSelect) {
+        sortSelect.value = (sortSelect.value === 'DESC') ? 'ASC' : 'DESC';
+        applyDashboardFilter();
+      }
     }
 
     function applyDashboardFilter() {
@@ -2145,8 +2197,16 @@
       const filterUser = document.getElementById('user-filter')?.value || 'ALL';
       const filterMonth = document.getElementById('filter-month')?.value || 'ALL';
       const filterYear = document.getElementById('filter-year')?.value || 'ALL';
+      const searchQuery = (document.getElementById('trx-search')?.value || '').trim().toLowerCase();
+      const sortDate = document.getElementById('trx-sort-date')?.value || 'DESC';
 
-      return (appData?.transactions || []).filter(t => {
+      const clearBtn = document.getElementById('btn-clear-search');
+      if (clearBtn) {
+        if (searchQuery) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+      }
+
+      let list = (appData?.transactions || []).filter(t => {
         // Filter User
         if (filterUser !== 'ALL') {
           if (!t.user || !t.user.toLowerCase().includes(filterUser.toLowerCase())) {
@@ -2154,18 +2214,41 @@
           }
         }
         // Filter Date (Bulan & Tahun saja)
-        if (!t.tanggal) {
-          return (filterMonth === 'ALL' && filterYear === 'ALL');
+        if (t.tanggal) {
+          const tYear = t.tanggal.slice(0, 4);
+          const tMonth = t.tanggal.slice(5, 7);
+          if (filterYear !== 'ALL' && tYear !== filterYear) return false;
+          if (filterMonth !== 'ALL' && tMonth !== filterMonth) return false;
+        } else {
+          if (filterMonth !== 'ALL' || filterYear !== 'ALL') return false;
         }
 
-        const tYear = t.tanggal.slice(0, 4);
-        const tMonth = t.tanggal.slice(5, 7);
-
-        if (filterYear !== 'ALL' && tYear !== filterYear) return false;
-        if (filterMonth !== 'ALL' && tMonth !== filterMonth) return false;
+        // Filter Searching Keterangan & Catatan
+        if (searchQuery) {
+          const ket = (t.keterangan || '').toLowerCase();
+          const kat = (t.kategori || '').toLowerCase();
+          const acc = (t.akun || '').toLowerCase();
+          const usr = (t.user || '').toLowerCase();
+          if (!ket.includes(searchQuery) && !kat.includes(searchQuery) && !acc.includes(searchQuery) && !usr.includes(searchQuery)) {
+            return false;
+          }
+        }
 
         return true;
       });
+
+      // Sorting Tanggal (DESC atau ASC)
+      list.sort((a, b) => {
+        const dateA = a.tanggal || '';
+        const dateB = b.tanggal || '';
+        if (sortDate === 'ASC') {
+          return dateA.localeCompare(dateB) || ((a.id || '') > (b.id || '') ? 1 : -1);
+        } else {
+          return dateB.localeCompare(dateA) || ((b.id || '') > (a.id || '') ? 1 : -1);
+        }
+      });
+
+      return list;
     }
 
     function updateAccountDropdowns() {
@@ -2290,6 +2373,8 @@
       const filterUser = document.getElementById('user-filter')?.value || 'ALL';
       const filterMonth = document.getElementById('filter-month')?.value || 'ALL';
       const filterYear = document.getElementById('filter-year')?.value || 'ALL';
+      const searchQuery = (document.getElementById('trx-search')?.value || '').trim();
+      const sortDate = document.getElementById('trx-sort-date')?.value || 'DESC';
 
       let periodDesc = "Semua Periode";
       if (filterMonth !== 'ALL' && filterYear !== 'ALL') {
@@ -2303,14 +2388,22 @@
       }
 
       const userDesc = filterUser === 'ALL' ? 'Semua Anggota' : filterUser;
+      const sortDesc = sortDate === 'ASC' ? 'Terlama (ASC)' : 'Terbaru (DESC)';
 
       const badgeEl = document.getElementById('trx-count-badge');
       const descEl = document.getElementById('trx-filter-desc');
       if (badgeEl) badgeEl.innerText = `${list.length} transaksi`;
-      if (descEl) descEl.innerText = `Periode: ${periodDesc} • Filter: ${userDesc}`;
+      if (descEl) {
+        let descText = `Periode: ${periodDesc} • Filter: ${userDesc} • Urutan: ${sortDesc}`;
+        if (searchQuery) descText += ` • Cari: "${searchQuery}"`;
+        descEl.innerText = descText;
+      }
 
       if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Tidak ada transaksi pada periode <b>${periodDesc}</b> (${userDesc}).</td></tr>`;
+        const emptyMsg = searchQuery 
+          ? `Tidak ditemukan transaksi dengan kata kunci <b>"${searchQuery}"</b> pada periode <b>${periodDesc}</b>.`
+          : `Tidak ada transaksi pada periode <b>${periodDesc}</b> (${userDesc}).`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">${emptyMsg}</td></tr>`;
         return;
       }
 
@@ -2333,6 +2426,11 @@
         `;
         tbody.appendChild(tr);
       });
+
+      const sortIcon = document.getElementById('sort-date-icon');
+      if (sortIcon) {
+        sortIcon.setAttribute('data-lucide', sortDate === 'ASC' ? 'arrow-up' : 'arrow-down');
+      }
       lucide.createIcons();
     }
 
