@@ -625,6 +625,29 @@
               </span>
             </div>
           </div>
+          <!-- REKONSILIASI DEFISIT & POTONGAN ROLLOVER -->
+          <div class="px-5 py-3 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="p-1.5 bg-indigo-100 text-indigo-700 rounded-lg"><i data-lucide="scale" class="w-4 h-4"></i></span>
+              <span class="font-bold text-slate-700">Rekonsiliasi Defisit & Rollover Bulan Ini:</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-4">
+              <div>
+                <span class="text-slate-500">Total Defisit Terjadi:</span>
+                <span id="daily-reconcile-total-deficit" class="font-bold text-rose-600 ml-1">Rp 0</span>
+              </div>
+              <div class="text-slate-300">|</div>
+              <div>
+                <span class="text-slate-500">Cicilan Terpotong:</span>
+                <span id="daily-reconcile-paid" class="font-bold text-indigo-700 ml-1">Rp 0</span>
+              </div>
+              <div class="text-slate-300">|</div>
+              <div>
+                <span class="text-slate-500">Sisa Defisit Berjalan:</span>
+                <span id="daily-reconcile-remaining" class="font-bold text-amber-600 ml-1">Rp 0</span>
+              </div>
+            </div>
+          </div>
           <div class="overflow-x-auto p-4">
             <table class="w-full text-left text-xs sm:text-sm">
               <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[11px] tracking-wider">
@@ -5256,42 +5279,60 @@
         }
       });
 
-      // 2. Simulasi Rollover Defisit Multi-Day yang Presisi & Anti-Compounding
-      const schedule = new Array(daysInMonth + spreadDays + 10).fill(0);
+      // 2. Simulasi Rollover Defisit Presisi (Deficit Pool & Amortization)
       const daysResult = [];
       const today = new Date();
       const isCurrentMonth = (today.getFullYear() === year && today.getMonth() === month);
       const currentDay = isCurrentMonth ? today.getDate() : 999;
 
+      const maxDeduction = Math.round(baseLimit * 0.70); // Maksimum potongan 70% dari limit dasar
+
+      let outstandingDeficit = 0;
+      let activeInstallment = 0;
+      let totalDeficitMonth = 0;
+      let totalDeductionsApplied = 0;
+      let outstandingDeficitToday = 0;
+
       for (let day = 1; day <= daysInMonth; day++) {
         const isPastOrToday = day <= currentDay;
-        const rawDeduction = rolloverEnabled ? (schedule[day] || 0) : 0;
-        // Batasi potongan maksimal 70% dari limit dasar agar limit efektif tidak drop ke 0 atau minus
-        const maxDeduction = Math.round(baseLimit * 0.70);
-        const deduction = Math.min(maxDeduction, Math.round(rawDeduction));
+
+        let deduction = 0;
+        if (rolloverEnabled && outstandingDeficit > 0) {
+          // Jika defisit bertambah terus setiap hari, cicilan potongan bertambah
+          const targetFromDeficit = Math.ceil(outstandingDeficit / spreadDays);
+          activeInstallment = Math.max(activeInstallment, targetFromDeficit);
+          // Batasi maksimum 70% dari nilai default acuan yang ditentukan
+          activeInstallment = Math.min(maxDeduction, activeInstallment);
+          // Jangan potong lebih besar dari saldo defisit yang ada
+          deduction = Math.min(outstandingDeficit, activeInstallment);
+        } else {
+          activeInstallment = 0;
+        }
+
         const effectiveLimit = Math.max(0, baseLimit - deduction);
+        const spent = isPastOrToday ? (dailySums[day] || 0) : 0;
+        const balance = effectiveLimit - spent;
 
-        const spent = dailySums[day] || 0;
-
-        // Distribusi overspend hanya dihitung jika hari tersebut sudah berlangsung/hari ini
+        let todayOverspend = 0;
         if (rolloverEnabled && isPastOrToday) {
-          // A. Overspend baru di atas limit dasar:
-          const newOverspend = Math.max(0, spent - baseLimit);
-          if (newOverspend > 0 && spreadDays > 0) {
-            const slice = newOverspend / spreadDays;
-            for (let s = 1; s <= spreadDays; s++) {
-              schedule[day + s] = (schedule[day + s] || 0) + slice;
-            }
+          todayOverspend = Math.max(0, spent - effectiveLimit);
+          outstandingDeficit = outstandingDeficit - deduction + todayOverspend;
+          if (outstandingDeficit <= 0) {
+            outstandingDeficit = 0;
+            activeInstallment = 0;
           }
+          totalDeficitMonth += todayOverspend;
+          totalDeductionsApplied += deduction;
+        } else if (rolloverEnabled && !isPastOrToday) {
+          // Hari mendatang mencicil sisa defisit secara otomatis
+          outstandingDeficit = Math.max(0, outstandingDeficit - deduction);
+          if (outstandingDeficit <= 0) {
+            activeInstallment = 0;
+          }
+        }
 
-          // B. Penyerapan potongan terjadwal:
-          // Jika belanja hari ini di bawah limit dasar, selisih hematnya dipakai menyerap potongan.
-          // Sisa potongan yang belum terserap digeser maju ke (day + spreadDays) tanpa digandakan.
-          const absorbed = Math.min(deduction, Math.max(0, baseLimit - spent));
-          const unabsorbed = deduction - absorbed;
-          if (unabsorbed > 0 && spreadDays > 0) {
-            schedule[day + spreadDays] = (schedule[day + spreadDays] || 0) + unabsorbed;
-          }
+        if (day === currentDay) {
+          outstandingDeficitToday = outstandingDeficit;
         }
 
         const dateStr = `${prefix}-${String(day).padStart(2, '0')}`;
@@ -5305,13 +5346,19 @@
           baseLimit,
           deduction,
           effectiveLimit,
-          spent,
-          balance: effectiveLimit - spent,
+          spent: isPastOrToday ? spent : 0,
+          balance,
           isOver: spent > effectiveLimit && isPastOrToday,
           isPastOrToday,
+          todayOverspend,
+          outstandingDeficit,
           categories: dailyCatSums[day],
           transactions: dailyTrxMap[day]
         });
+      }
+
+      if (!isCurrentMonth) {
+        outstandingDeficitToday = outstandingDeficit;
       }
 
       return {
@@ -5319,7 +5366,11 @@
         scope,
         daysResult,
         daysInMonth,
-        prefix
+        prefix,
+        totalDeficitMonth,
+        totalDeductionsApplied,
+        outstandingDeficitToday,
+        remainingDeficitMonthEnd: outstandingDeficit
       };
     }
 
@@ -5353,14 +5404,23 @@
       const elBadge = document.getElementById('stat-daily-badge-today');
 
       if (elBase) elBase.innerText = formatIDR(cfg.defaultDailyLimit);
-      if (elSpread) elSpread.innerText = cfg.rolloverEnabled ? `Distribusi defisit: ${cfg.spreadDays} hari (${engine.scope === 'operational' ? 'Belanja Harian' : 'Semua Pos'})` : `Rollover: Dinonaktifkan`;
+      if (elSpread) {
+        const maxDeductLimit = Math.round(cfg.defaultDailyLimit * 0.70);
+        elSpread.innerText = cfg.rolloverEnabled
+          ? `Cicil defisit: ${cfg.spreadDays} hari (Maks 70%: -${formatIDR(maxDeductLimit)})`
+          : `Rollover: Dinonaktifkan`;
+      }
 
       if (elEff) elEff.innerText = formatIDR(todayData.effectiveLimit);
       if (elDeduct) {
-        elDeduct.innerText = todayData.deduction > 0
-          ? `Potongan defisit aktif: -${formatIDR(todayData.deduction)} (terbagi ${cfg.spreadDays} hari)`
-          : `Tidak ada beban potongan defisit`;
-        elDeduct.className = todayData.deduction > 0 ? "text-[11px] text-rose-600 font-semibold mt-1" : "text-[11px] text-slate-500 mt-1";
+        if (todayData.deduction > 0) {
+          const isMaxCap = todayData.deduction >= Math.round(cfg.defaultDailyLimit * 0.70);
+          elDeduct.innerText = `Potongan aktif: -${formatIDR(todayData.deduction)} (${isMaxCap ? 'Maksimal 70%' : `cicilan ${cfg.spreadDays} hari`} | Sisa hutang: ${formatIDR(todayData.outstandingDeficit)})`;
+          elDeduct.className = "text-[11px] text-rose-600 font-semibold mt-1";
+        } else {
+          elDeduct.innerText = `Tidak ada beban potongan defisit (Lunas)`;
+          elDeduct.className = "text-[11px] text-slate-500 mt-1";
+        }
       }
 
       if (elSpent) elSpent.innerText = formatIDR(todayData.spent);
@@ -5378,7 +5438,7 @@
       if (elBadge) {
         if (todayData.balance < 0) {
           elBadge.className = "mt-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800";
-          elBadge.innerText = `Overspent (Defisit dibagi ${cfg.spreadDays} hari ke depan)`;
+          elBadge.innerText = `Overspent (Defisit dicicil ke hari berikutnya)`;
         } else if (todayData.spent > todayData.effectiveLimit * 0.8 && todayData.effectiveLimit > 0) {
           elBadge.className = "mt-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800";
           elBadge.innerText = `Waspada (Sisa kuota menipis)`;
@@ -5387,6 +5447,14 @@
           elBadge.innerText = `Aman & Sesuai Kuota`;
         }
       }
+
+      // 1.5 Update Rekonsiliasi Bar
+      const elRecDeficit = document.getElementById('daily-reconcile-total-deficit');
+      const elRecPaid = document.getElementById('daily-reconcile-paid');
+      const elRecRemaining = document.getElementById('daily-reconcile-remaining');
+      if (elRecDeficit) elRecDeficit.innerText = formatIDR(engine.totalDeficitMonth);
+      if (elRecPaid) elRecPaid.innerText = formatIDR(engine.totalDeductionsApplied);
+      if (elRecRemaining) elRecRemaining.innerText = formatIDR(engine.outstandingDeficitToday);
 
       // 2. Breakdown Kategori Hari Ini
       const catDateLabel = document.getElementById('daily-categories-date-label');
@@ -5442,7 +5510,9 @@
           let statusBadge = '';
 
           if (!row.isPastOrToday) {
-            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">Belum Berjalan</span>`;
+            statusBadge = row.deduction > 0
+              ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">Mendatang (-${formatIDR(row.deduction)})</span>`
+              : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">Belum Berjalan</span>`;
           } else if (row.isOver) {
             statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Defisit (-${formatIDR(Math.abs(row.balance))})</span>`;
           } else if (row.spent > row.effectiveLimit * 0.8 && row.effectiveLimit > 0) {
