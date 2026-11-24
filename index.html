@@ -71,6 +71,7 @@
       <div class="flex gap-1 border-b border-slate-200 overflow-x-auto pb-px">
         <button onclick="switchTab('tab-dashboard')" id="btn-tab-dashboard" class="tab-btn active px-4 py-2.5 text-sm font-semibold rounded-t-lg transition whitespace-nowrap">Dashboard & Transaksi</button>
         <button onclick="switchTab('tab-planner')" id="btn-tab-planner" class="tab-btn px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-indigo-600 rounded-t-lg transition whitespace-nowrap">Budget Planner Fleksibel & Utang</button>
+        <button onclick="switchTab('tab-daily')" id="btn-tab-daily" class="tab-btn px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-indigo-600 rounded-t-lg transition whitespace-nowrap flex items-center gap-1.5"><i data-lucide="calendar-check" class="w-4 h-4"></i> Limit Harian</button>
         <button onclick="switchTab('tab-rutin')" id="btn-tab-rutin" class="tab-btn px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-indigo-600 rounded-t-lg transition whitespace-nowrap">Tagihan & Rutin Bulanan</button>
         <button onclick="switchTab('tab-rekening')" id="btn-tab-rekening" class="tab-btn px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-indigo-600 rounded-t-lg transition whitespace-nowrap flex items-center gap-1.5"><i data-lucide="landmark" class="w-4 h-4"></i> Data Rekening</button>
       </div>
@@ -462,6 +463,181 @@
           </div>
         </div>
 
+        <!-- CARD 6: BUKU CATATAN UTANG & PIUTANG KELUARGA REAL -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-5">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <div class="p-2 bg-rose-50 text-rose-600 rounded-xl"><i data-lucide="book-open-check" class="w-5 h-5"></i></div>
+                <h3 class="text-base font-bold text-slate-900">Buku Catatan Utang & Piutang Real</h3>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Kelola pinjaman diberikan (Piutang) dan pinjaman diterima (Utang) dengan pelunasan bertahap atau sekaligus.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="openModalDebtFast('PIUTANG')" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold rounded-xl text-xs transition flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-600"></i> Beri Pinjaman (Piutang)
+              </button>
+              <button onclick="openModalDebtFast('UTANG')" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold rounded-xl text-xs transition flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-rose-600"></i> Terima Utang Baru
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI UTANG & PIUTANG -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div class="p-4 rounded-xl border border-emerald-100 bg-emerald-50/50">
+              <span class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Total Piutang Aktif (Uang di Luar)</span>
+              <h4 id="kpi-piutang-active" class="text-xl font-bold text-emerald-700 mt-1">Rp 0</h4>
+              <p class="text-[10px] text-emerald-600 mt-1">Hak uang kita yang belum lunas</p>
+            </div>
+            <div class="p-4 rounded-xl border border-rose-100 bg-rose-50/50">
+              <span class="text-[11px] font-bold text-rose-800 uppercase tracking-wider">Total Utang Aktif (Kewajiban Kita)</span>
+              <h4 id="kpi-utang-active" class="text-xl font-bold text-rose-700 mt-1">Rp 0</h4>
+              <p class="text-[10px] text-rose-600 mt-1">Sisa utang keluarga yang harus dibayar</p>
+            </div>
+            <div class="p-4 rounded-xl border border-indigo-100 bg-indigo-50/50">
+              <span class="text-[11px] font-bold text-indigo-800 uppercase tracking-wider">Piutang Terbayar / Kembali</span>
+              <h4 id="kpi-piutang-repaid" class="text-xl font-bold text-indigo-700 mt-1">Rp 0</h4>
+              <p class="text-[10px] text-indigo-600 mt-1">Uang pinjaman yang sudah dikembalikan orang</p>
+            </div>
+            <div class="p-4 rounded-xl border border-purple-100 bg-purple-50/50">
+              <span class="text-[11px] font-bold text-purple-800 uppercase tracking-wider">Utang Kita yang Telah Lunas</span>
+              <h4 id="kpi-utang-repaid" class="text-xl font-bold text-purple-700 mt-1">Rp 0</h4>
+              <p class="text-[10px] text-purple-600 mt-1">Total cicilan/utang kita yang sukses terselesaikan</p>
+            </div>
+          </div>
+
+          <!-- TAB SWITCHER: PIUTANG vs UTANG -->
+          <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
+            <button onclick="switchDebtTableTab('PIUTANG')" id="btn-debt-tab-piutang" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-xs transition flex items-center gap-1.5">
+              <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i> Piutang Kita (Dipinjamkan)
+            </button>
+            <button onclick="switchDebtTableTab('UTANG')" id="btn-debt-tab-utang" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-slate-50 transition flex items-center gap-1.5">
+              <i data-lucide="arrow-down-left" class="w-3.5 h-3.5"></i> Utang Kita (Kewajiban)
+            </button>
+            <label class="ml-auto flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer">
+              <input type="checkbox" id="check-show-lunas-debts" onchange="renderDebtsTable()" class="rounded text-indigo-600 focus:ring-indigo-500">
+              <span>Tampilkan yang Sudah Lunas</span>
+            </label>
+          </div>
+
+          <!-- TABEL CONTAINER -->
+          <div id="debts-table-container" class="overflow-x-auto">
+            <div class="p-6 text-center text-slate-400 text-xs">Memuat data utang & piutang...</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- KONTEN TAB: PEMBATASAN PENGELUARAN HARIAN (TAB-DAILY) -->
+      <div id="tab-daily" class="tab-content hidden space-y-6">
+        <!-- HEADER TAB DAILY -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+          <div>
+            <div class="flex items-center gap-2">
+              <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="calendar-range" class="w-5 h-5"></i></div>
+              <h2 class="text-lg font-bold text-slate-900">Pembatasan Pengeluaran Harian & Multi-Day Rollover</h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Kendalikan pengeluaran harian secara disiplin dengan kompensasi defisit bertahap agar tidak memberatkan hari berikutnya.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs">
+              <label class="font-semibold text-slate-500">Bulan:</label>
+              <select id="daily-month-select" onchange="onDailyPeriodChange()" class="bg-transparent font-bold text-indigo-700 outline-none cursor-pointer">
+                <!-- 0-11 months -->
+              </select>
+              <select id="daily-year-select" onchange="onDailyPeriodChange()" class="bg-transparent font-bold text-indigo-700 outline-none cursor-pointer ml-1">
+                <!-- years -->
+              </select>
+            </div>
+            <button onclick="openDailyLimitSettings()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-md shadow-indigo-100">
+              <i data-lucide="sliders" class="w-4 h-4"></i> Atur Limit & Rollover
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 KPI UTAMA HARIAN -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Limit Harian Acuan</span>
+            <h3 id="stat-daily-base-limit" class="text-2xl font-bold text-slate-900 mt-1">Rp 0</h3>
+            <p class="text-[11px] text-slate-500 mt-1" id="stat-daily-spread-info">Distribusi defisit: 3 hari</p>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Limit Efektif Hari Ini</span>
+            <h3 id="stat-daily-effective-today" class="text-2xl font-bold text-indigo-600 mt-1">Rp 0</h3>
+            <p class="text-[11px] text-slate-500 mt-1" id="stat-daily-deduction-info">Potongan defisit kemarin: Rp 0</p>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Realisasi Belanja Hari Ini</span>
+            <h3 id="stat-daily-spent-today" class="text-2xl font-bold text-slate-800 mt-1">Rp 0</h3>
+            <p class="text-[11px] text-slate-500 mt-1" id="stat-daily-trx-count">0 transaksi dicatat hari ini</p>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sisa Kuota Hari Ini</span>
+            <h3 id="stat-daily-sisa-today" class="text-2xl font-bold text-emerald-600 mt-1">Rp 0</h3>
+            <div id="stat-daily-badge-today" class="mt-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+              Aman & Sesuai Kuota
+            </div>
+          </div>
+        </div>
+
+        <!-- BREAKDOWN ALOKASI KATEGORI HARI INI -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
+            <div>
+              <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-indigo-600"></i> Alokasi Kategori Belanja Hari Ini (Real-Time)
+              </h4>
+              <p class="text-xs text-slate-500">Membagi jatah belanja harian ke dalam pos kebutuhan utama keluarga.</p>
+            </div>
+            <span class="text-xs text-slate-400 font-medium" id="daily-categories-date-label">Hari ini</span>
+          </div>
+
+          <div id="daily-categories-progress" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Diisi otomatis oleh renderDailyLimitTab() -->
+          </div>
+        </div>
+
+        <!-- TABEL KALENDER / TRACKER HARIAN BULANAN -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h3 class="font-bold text-slate-800 text-sm">Tracker Kalender Pengeluaran & Defisit Multi-Day</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Jika pengeluaran hari tertentu melebihi batas, kelebihan dibagi rata memotong limit hari-hari berikutnya.</p>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-semibold border border-emerald-100">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Hemat / Aman
+              </span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 font-semibold border border-amber-100">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span> Waspada (>80%)
+              </span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-semibold border border-rose-100">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span> Overspent (Rollover Aktif)
+              </span>
+            </div>
+          </div>
+          <div class="overflow-x-auto p-4">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[11px] tracking-wider">
+                <tr>
+                  <th class="p-3.5">Tanggal</th>
+                  <th class="p-3.5">Limit Dasar</th>
+                  <th class="p-3.5">Potongan Rollover</th>
+                  <th class="p-3.5">Limit Efektif</th>
+                  <th class="p-3.5">Realisasi Belanja</th>
+                  <th class="p-3.5">Sisa / Defisit</th>
+                  <th class="p-3.5 text-center">Status</th>
+                  <th class="p-3.5 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="daily-table-body" class="divide-y divide-slate-100 text-slate-700">
+                <!-- Diisi oleh renderDailyLimitTab() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- KONTEN TAB: PENGELUARAN RUTIN (CRUD LENGKAP) -->
@@ -651,7 +827,62 @@
               <option value="OUT">Pengeluaran (OUT)</option>
               <option value="IN">Pemasukan / Gaji (IN)</option>
               <option value="TRANSFER">Pindah Saldo / Ke Dana Darurat (TRANSFER)</option>
+              <option value="PIUTANG">Beri Pinjaman / Piutang (Uang Keluar)</option>
+              <option value="UTANG">Terima Pinjaman / Utang (Uang Masuk)</option>
             </select>
+          </div>
+        </div>
+
+        <!-- FORM KHUSUS PEMBUATAN UTANG / PIUTANG BARU -->
+        <div id="debt-create-fields" class="hidden p-3 bg-amber-50/70 border border-amber-200 rounded-xl space-y-2.5">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+            <i data-lucide="users" class="w-4 h-4 text-amber-600"></i> Detail Pihak & Jatuh Tempo
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="font-semibold text-slate-700 text-[11px]" id="lbl-debt-party">Nama Pihak (Peminjam / Pemberi)</label>
+              <input type="text" id="form-debt-party" placeholder="Contoh: Budi Santoso" class="w-full mt-1 p-2 border border-amber-200 rounded-lg text-xs bg-white">
+            </div>
+            <div>
+              <label class="font-semibold text-slate-700 text-[11px]">Jatuh Tempo (Opsional)</label>
+              <input type="date" id="form-debt-due-date" class="w-full mt-1 p-2 border border-amber-200 rounded-lg text-xs bg-white">
+            </div>
+          </div>
+        </div>
+
+        <!-- KOTAK PILIHAN PELUNASAN / CICILAN UTANG / PIUTANG -->
+        <div id="debt-repayment-box" class="hidden p-3.5 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+              <i data-lucide="link-2" class="w-4 h-4 text-indigo-600"></i> Hubungkan ke Data Utang / Piutang
+            </span>
+            <span id="repay-badge-type" class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold">Pelunasan</span>
+          </div>
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 block mb-1">Pilih Data yang Akan Dicicil / Dilunasi:</label>
+            <select id="repay-debt-select" onchange="onRepayDebtSelectChange()" class="w-full p-2 border border-indigo-300 rounded-xl text-xs bg-white font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500">
+              <option value="">-- Pilih Utang / Piutang --</option>
+            </select>
+          </div>
+          <div id="repay-debt-info" class="hidden p-2.5 bg-white/90 rounded-xl border border-indigo-100 text-[11px] space-y-1">
+            <div class="flex justify-between text-slate-600">
+              <span>Total Nominal: <b id="repay-info-nominal" class="text-slate-800">-</b></span>
+              <span>Sudah Terbayar: <b id="repay-info-terbayar" class="text-emerald-700">-</b></span>
+            </div>
+            <div class="flex justify-between items-center text-slate-700 pt-1 border-t border-slate-100">
+              <span>Sisa Tagihan:</span>
+              <span id="repay-info-sisa" class="font-bold text-rose-600 text-xs">-</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 pt-1">
+            <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+              <input type="radio" name="repay-stage" id="repay-mode-partial" value="partial" checked onchange="onRepayModeChange()" class="text-indigo-600 focus:ring-indigo-500">
+              <span>Cicilan Bertahap</span>
+            </label>
+            <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+              <input type="radio" name="repay-stage" id="repay-mode-full" value="full" onchange="onRepayModeChange()" class="text-indigo-600 focus:ring-indigo-500">
+              <span class="text-indigo-700 font-bold">Langsung Lunasi</span>
+            </label>
           </div>
         </div>
         <div>
@@ -665,7 +896,7 @@
           </div>
           <div id="wrapper-form-cat">
             <label class="font-semibold text-slate-600">Kategori</label>
-            <select id="form-cat" onchange="handleTransferCategoryChange()" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-medium">
+            <select id="form-cat" onchange="handleCategoryChange()" class="w-full mt-1 p-2.5 border rounded-xl text-xs bg-slate-50 focus:bg-white font-medium">
               <!-- Diisi otomatis oleh updateCategoryOptions() -->
             </select>
           </div>
@@ -782,6 +1013,8 @@
               <option value="OUT">Pengeluaran (OUT)</option>
               <option value="IN">Pemasukan / Gaji (IN)</option>
               <option value="TRANSFER">Pindah Saldo / Ke Dana Darurat (TRANSFER)</option>
+              <option value="PIUTANG">Beri Pinjaman / Piutang (Uang Keluar)</option>
+              <option value="UTANG">Terima Pinjaman / Utang (Uang Masuk)</option>
             </select>
           </div>
         </div>
@@ -1219,6 +1452,155 @@
     </div>
   </div>
 
+  <!-- MODAL PENGATURAN LIMIT HARIAN & MULTI-DAY ROLLOVER -->
+  <div id="modal-daily-limit-settings" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <i data-lucide="sliders" class="w-4 h-4 text-indigo-600"></i> Pengaturan Batas Belanja Harian & Rollover
+        </h3>
+        <button type="button" onclick="closeDailyLimitSettings()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="saveDailyLimitSettings(event)" class="space-y-4 text-xs">
+        <!-- Input Limit Default Harian -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Limit Pengeluaran Harian Acuan (Rp/Hari)</label>
+          <div class="relative">
+            <span class="absolute left-3 top-2.5 text-xs text-slate-400 font-bold">Rp</span>
+            <input type="number" id="setting-daily-limit" required min="1000" step="1000" placeholder="150000" class="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-indigo-900 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500" oninput="updateDailyCategoryNominalsPreview()">
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Batas belanja dasar setiap hari sebelum kompensasi defisit.</p>
+        </div>
+
+        <!-- Pengaturan Rollover Multi-Day -->
+        <div class="p-4 bg-indigo-50/60 rounded-xl border border-indigo-100 space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 cursor-pointer font-bold text-indigo-950 text-xs">
+              <input type="checkbox" id="setting-rollover-enabled" checked onchange="toggleRolloverInputs()" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer">
+              <span>Aktifkan Kompensasi Defisit (Rollover)</span>
+            </label>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold">Otomatis</span>
+          </div>
+
+          <div id="setting-rollover-details" class="space-y-2 pt-1 border-t border-indigo-100">
+            <p class="text-[11px] text-slate-600 leading-relaxed">
+              Jika pengeluaran melebihi limit hari ini, nominal overspent akan <b>dibagi rata</b> memotong limit belanja harian ke beberapa hari mendatang agar tidak memberatkan 1 hari berikutnya.
+            </p>
+            <div class="flex items-center justify-between gap-3 pt-1">
+              <label class="font-semibold text-slate-700 text-[11px]">Bagi Defisit ke Berapa Hari Mendatang?</label>
+              <select id="setting-spread-days" class="px-3 py-1.5 border border-indigo-200 rounded-lg text-xs font-bold text-indigo-900 bg-white focus:ring-2 focus:ring-indigo-500">
+                <option value="1">1 Hari Berikutnya (Langsung)</option>
+                <option value="2">2 Hari Mendatang</option>
+                <option value="3" selected>3 Hari Mendatang (Disarankan)</option>
+                <option value="5">5 Hari Mendatang</option>
+                <option value="7">7 Hari Mendatang (1 Minggu)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alokasi Pembagian Kategori Harian -->
+        <div class="space-y-2.5">
+          <div class="flex justify-between items-center">
+            <label class="font-bold text-slate-700">Alokasi Kategori Belanja Harian (%)</label>
+            <span id="setting-cat-total-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Total: 100%</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Bagi limit acuan ke pos-pos pengeluaran harian utama keluarga.</p>
+
+          <div class="space-y-2">
+            <!-- Konsumsi -->
+            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-2">
+              <div class="flex-1">
+                <span class="font-semibold text-slate-700 block">Konsumsi (Makan & Minum Harian)</span>
+                <span class="text-[10px] text-slate-400 font-mono" id="preview-nominal-konsumsi">Rp 75.000 / hari</span>
+              </div>
+              <div class="flex items-center gap-1.5 w-24">
+                <input type="number" id="setting-pct-konsumsi" value="50" min="0" max="100" class="w-16 p-1.5 text-center font-bold border border-slate-200 rounded-lg text-xs" oninput="updateDailyCategoryNominalsPreview()">
+                <span class="text-xs font-semibold text-slate-500">%</span>
+              </div>
+            </div>
+
+            <!-- Jalan-Jalan -->
+            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-2">
+              <div class="flex-1">
+                <span class="font-semibold text-slate-700 block">Jalan-Jalan / Hangout / Hiburan</span>
+                <span class="text-[10px] text-slate-400 font-mono" id="preview-nominal-jalanjalan">Rp 30.000 / hari</span>
+              </div>
+              <div class="flex items-center gap-1.5 w-24">
+                <input type="number" id="setting-pct-jalanjalan" value="20" min="0" max="100" class="w-16 p-1.5 text-center font-bold border border-slate-200 rounded-lg text-xs" oninput="updateDailyCategoryNominalsPreview()">
+                <span class="text-xs font-semibold text-slate-500">%</span>
+              </div>
+            </div>
+
+            <!-- Transportasi -->
+            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-2">
+              <div class="flex-1">
+                <span class="font-semibold text-slate-700 block">Transportasi & BBM</span>
+                <span class="text-[10px] text-slate-400 font-mono" id="preview-nominal-transport">Rp 22.500 / hari</span>
+              </div>
+              <div class="flex items-center gap-1.5 w-24">
+                <input type="number" id="setting-pct-transport" value="15" min="0" max="100" class="w-16 p-1.5 text-center font-bold border border-slate-200 rounded-lg text-xs" oninput="updateDailyCategoryNominalsPreview()">
+                <span class="text-xs font-semibold text-slate-500">%</span>
+              </div>
+            </div>
+
+            <!-- Lainnya -->
+            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-2">
+              <div class="flex-1">
+                <span class="font-semibold text-slate-700 block">Kebutuhan / Pengeluaran Lainnya</span>
+                <span class="text-[10px] text-slate-400 font-mono" id="preview-nominal-lainnya">Rp 22.500 / hari</span>
+              </div>
+              <div class="flex items-center gap-1.5 w-24">
+                <input type="number" id="setting-pct-lainnya" value="15" min="0" max="100" class="w-16 p-1.5 text-center font-bold border border-slate-200 rounded-lg text-xs" oninput="updateDailyCategoryNominalsPreview()">
+                <span class="text-xs font-semibold text-slate-500">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeDailyLimitSettings()" class="px-4 py-2 border rounded-xl hover:bg-slate-50 font-medium">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md flex items-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i> Simpan Pengaturan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DETAIL TRANSAKSI HARIAN -->
+  <div id="modal-daily-trx-detail" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div>
+          <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+            <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i> Rincian Pengeluaran Tanggal <span id="modal-daily-detail-date" class="text-indigo-600">-</span>
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5" id="modal-daily-detail-summary">Total belanja: Rp 0</p>
+        </div>
+        <button type="button" onclick="closeModalDailyTrxDetail()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-2" id="modal-daily-detail-list">
+        <!-- Diisi dinamis -->
+      </div>
+
+      <div class="flex justify-between items-center pt-3 border-t border-slate-100 text-xs">
+        <button onclick="openModalTrxForDate()" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold rounded-lg flex items-center gap-1 transition">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i> Catat Transaksi di Tanggal Ini
+        </button>
+        <button type="button" onclick="closeModalDailyTrxDetail()" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let appData = null;
     let currentUser = JSON.parse(localStorage.getItem('user_session') || 'null');
@@ -1274,6 +1656,9 @@
         updatePlannerPeriodOptions();
         renderSalarySources();
         renderBudgetPlannerList();
+        renderDebtsTable();
+      } else if (tabId === 'tab-daily') {
+        initDailyLimitTab();
       } else if (tabId === 'tab-rekening') {
         renderRekeningTab();
       }
@@ -1919,6 +2304,7 @@
             <option value="Kebutuhan Rumah Tangga">Kebutuhan Rumah Tangga</option>
           </optgroup>
           <optgroup label="💳 Cicilan Utang">
+            <option value="Bayar Utang Keluarga">Bayar Utang Keluarga / Teman (Pelunasan)</option>
             <option value="Cicilan Utang">Cicilan Utang (Umum)</option>
             <option value="Cicilan KPR">Cicilan KPR / Rumah</option>
             <option value="Cicilan Kendaraan">Cicilan Motor / Mobil</option>
@@ -1969,10 +2355,30 @@
             <option value="Setor Tunai">Setor Tunai (Tunai -> Bank)</option>
           </optgroup>
         `;
+      } else if (type === 'PIUTANG') {
+        return `
+          <optgroup label="🤝 Pinjaman Diberikan (Piutang)">
+            <option value="Piutang Teman">Piutang Teman / Sahabat</option>
+            <option value="Piutang Keluarga">Piutang Keluarga / Saudara</option>
+            <option value="Piutang Usaha">Piutang Usaha / Rekan Kerja</option>
+            <option value="Piutang Lainnya">Piutang Lainnya</option>
+          </optgroup>
+        `;
+      } else if (type === 'UTANG') {
+        return `
+          <optgroup label="💳 Pinjaman Diterima (Utang)">
+            <option value="Utang Teman">Utang ke Teman / Sahabat</option>
+            <option value="Utang Keluarga">Utang ke Keluarga / Saudara</option>
+            <option value="Utang Bank / Lembaga">Utang Bank / Lembaga</option>
+            <option value="Utang Usaha / Modal">Utang Usaha / Modal</option>
+            <option value="Utang Lainnya">Utang Lainnya</option>
+          </optgroup>
+        `;
       } else {
         return `
           <optgroup label="💵 Pemasukan & Pendapatan">
             <option value="Gaji">Gaji Bulanan Utama</option>
+            <option value="Orang Lain Bayar Utang">Orang Lain Bayar Utang (Penerimaan Piutang)</option>
             <option value="Dana Tambahan">Dana Tambahan</option>
             <option value="Uang Sampingan">Uang Sampingan / Freelance</option>
             <option value="Bonus & THR">Bonus / Insentif / THR</option>
@@ -2005,6 +2411,106 @@
       }
     }
 
+    function handleCategoryChange() {
+      handleTransferCategoryChange();
+      checkDebtRepaymentCategory();
+    }
+
+    function checkDebtRepaymentCategory() {
+      const type = document.getElementById('form-type')?.value;
+      const cat = document.getElementById('form-cat')?.value;
+      const repayBox = document.getElementById('debt-repayment-box');
+      const repaySelect = document.getElementById('repay-debt-select');
+      const badgeType = document.getElementById('repay-badge-type');
+      if (!repayBox || !repaySelect) return;
+
+      const isRepayPiutang = (type === 'IN' && cat === 'Orang Lain Bayar Utang');
+      const isRepayUtang = (type === 'OUT' && (cat === 'Bayar Utang Keluarga' || cat === 'Cicilan Utang'));
+
+      if (isRepayPiutang || isRepayUtang) {
+        repayBox.classList.remove('hidden');
+        if (badgeType) {
+          badgeType.innerText = isRepayPiutang ? 'Terima Pelunasan Piutang' : 'Bayar Cicilan / Utang';
+          badgeType.className = isRepayPiutang 
+            ? 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold'
+            : 'text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold';
+        }
+
+        const targetType = isRepayPiutang ? 'PIUTANG' : 'UTANG';
+        const eligibleDebts = (appData?.debts || []).filter(d => d.tipe === targetType && String(d.status).toUpperCase() !== 'LUNAS');
+
+        let html = '<option value="">-- Pilih Data yang Akan Dilunasi / Dicicil --</option>';
+        eligibleDebts.forEach(d => {
+          const sisa = d.sisa !== undefined ? d.sisa : Math.max(0, d.nominal - (d.terbayar || 0));
+          html += `<option value="${d.id}" data-nominal="${d.nominal}" data-terbayar="${d.terbayar || 0}" data-sisa="${sisa}" data-nama="${d.nama}" data-ket="${d.keterangan || ''}">
+            [${d.id}] ${d.nama} - Sisa Rp ${formatIDR(sisa)} (Total: Rp ${formatIDR(d.nominal)})
+          </option>`;
+        });
+
+        if (eligibleDebts.length === 0) {
+          html = `<option value="">(Tidak ada catatan ${targetType === 'PIUTANG' ? 'piutang aktif' : 'utang aktif'} yang belum lunas)</option>`;
+        }
+
+        repaySelect.innerHTML = html;
+        onRepayDebtSelectChange();
+      } else {
+        repayBox.classList.add('hidden');
+        const info = document.getElementById('repay-debt-info');
+        if (info) info.classList.add('hidden');
+      }
+    }
+
+    function onRepayDebtSelectChange() {
+      const select = document.getElementById('repay-debt-select');
+      const opt = select?.selectedOptions[0];
+      const infoBox = document.getElementById('repay-debt-info');
+      const descInput = document.getElementById('form-desc');
+      const nomInput = document.getElementById('form-nominal');
+      const fullRadio = document.getElementById('repay-mode-full');
+
+      if (!opt || !opt.value) {
+        if (infoBox) infoBox.classList.add('hidden');
+        return;
+      }
+
+      const nominal = parseFloat(opt.getAttribute('data-nominal')) || 0;
+      const terbayar = parseFloat(opt.getAttribute('data-terbayar')) || 0;
+      const sisa = parseFloat(opt.getAttribute('data-sisa')) || 0;
+      const nama = opt.getAttribute('data-nama') || '';
+      const ket = opt.getAttribute('data-ket') || '';
+
+      if (infoBox) {
+        infoBox.classList.remove('hidden');
+        document.getElementById('repay-info-nominal').innerText = `Rp ${formatIDR(nominal)}`;
+        document.getElementById('repay-info-terbayar').innerText = `Rp ${formatIDR(terbayar)}`;
+        document.getElementById('repay-info-sisa').innerText = `Rp ${formatIDR(sisa)}`;
+      }
+
+      if (descInput && (!descInput.value || descInput.value.startsWith('Pelunasan') || descInput.value.startsWith('Cicilan') || descInput.value.startsWith('Bayar') || descInput.value.startsWith('Penerimaan'))) {
+        const type = document.getElementById('form-type')?.value;
+        if (type === 'IN') {
+          descInput.value = `Penerimaan bayar piutang dari ${nama} (${ket || opt.value})`;
+        } else {
+          descInput.value = `Pembayaran utang ke ${nama} (${ket || opt.value})`;
+        }
+      }
+
+      if (fullRadio && fullRadio.checked && nomInput) {
+        nomInput.value = sisa > 0 ? sisa : '';
+      }
+    }
+
+    function onRepayModeChange() {
+      const fullRadio = document.getElementById('repay-mode-full');
+      const select = document.getElementById('repay-debt-select');
+      const opt = select?.selectedOptions[0];
+      const nomInput = document.getElementById('form-nominal');
+      if (fullRadio && fullRadio.checked && opt && opt.value && nomInput) {
+        const sisa = parseFloat(opt.getAttribute('data-sisa')) || 0;
+        if (sisa > 0) nomInput.value = sisa;
+      }
+    }
+
     function updateCategoryOptions() {
       const type = document.getElementById('form-type') ? document.getElementById('form-type').value : 'OUT';
       const catSelect = document.getElementById('form-cat');
@@ -2013,6 +2519,19 @@
       const splitBox = document.getElementById('split-emergency-box');
       const toAccRow = document.getElementById('wrapper-form-to-account');
       const lblAccount = document.getElementById('lbl-form-account');
+      const debtCreateBox = document.getElementById('debt-create-fields');
+      const lblDebtParty = document.getElementById('lbl-debt-party');
+
+      if (debtCreateBox) {
+        if (type === 'PIUTANG' || type === 'UTANG') {
+          debtCreateBox.classList.remove('hidden');
+          if (lblDebtParty) {
+            lblDebtParty.innerText = type === 'PIUTANG' ? 'Nama Pihak (Peminjam / Beri ke)' : 'Nama Pihak (Pemberi Pinjaman / Terima dari)';
+          }
+        } else {
+          debtCreateBox.classList.add('hidden');
+        }
+      }
 
       if (type === 'IN') {
         if (splitBox) splitBox.classList.remove('hidden');
@@ -2023,11 +2542,21 @@
         if (toAccRow) toAccRow.classList.remove('hidden');
         if (lblAccount) lblAccount.innerText = "Dari Rekening (Asal / Sumber Dana)";
         handleTransferCategoryChange();
+      } else if (type === 'PIUTANG') {
+        if (splitBox) splitBox.classList.add('hidden');
+        if (toAccRow) toAccRow.classList.add('hidden');
+        if (lblAccount) lblAccount.innerText = "Sumber Rekening (Dana Dipinjamkan Keluar)";
+      } else if (type === 'UTANG') {
+        if (splitBox) splitBox.classList.add('hidden');
+        if (toAccRow) toAccRow.classList.add('hidden');
+        if (lblAccount) lblAccount.innerText = "Rekening Penerima (Dana Pinjaman Masuk)";
       } else {
         if (splitBox) splitBox.classList.add('hidden');
         if (toAccRow) toAccRow.classList.add('hidden');
         if (lblAccount) lblAccount.innerText = "Akun / Rekening Pembayaran";
       }
+
+      checkDebtRepaymentCategory();
       lucide.createIcons();
     }
 
@@ -2146,6 +2675,12 @@
         if (!selectedVal) {
           handleEditTransferCategoryChange();
         }
+      } else if (type === 'PIUTANG') {
+        if (toAccRow) toAccRow.classList.add('hidden');
+        if (lblAccount) lblAccount.innerText = "Sumber Rekening (Dana Dipinjamkan Keluar)";
+      } else if (type === 'UTANG') {
+        if (toAccRow) toAccRow.classList.add('hidden');
+        if (lblAccount) lblAccount.innerText = "Rekening Penerima (Dana Pinjaman Masuk)";
       } else {
         if (toAccRow) toAccRow.classList.add('hidden');
         if (lblAccount) lblAccount.innerText = "Akun / Rekening Pembayaran";
@@ -2737,6 +3272,8 @@
           renderBudgetPlannerList();
           renderRekeningTab();
           renderSavingsGoals();
+          renderDebtsTable();
+          renderDailyLimitTab();
         }
       } catch (err) { console.error(err); }
     }
@@ -2747,7 +3284,7 @@
         const total = appData.accounts.reduce((s, a) => s + a.saldo, 0);
         const emergency = appData.accounts.find(a => a.nama.toLowerCase().includes('seabank'))?.saldo || 0;
         const cadangan = appData.accounts.find(a => a.nama.toLowerCase().includes('istri'))?.saldo || 0;
-        const piutangTotal = (appData.debts || []).filter(d => d.tipe === 'PIUTANG' && d.status === 'BELUM').reduce((s, d) => s + d.nominal, 0);
+        const piutangTotal = (appData.debts || []).filter(d => d.tipe === 'PIUTANG' && d.status !== 'LUNAS').reduce((s, d) => s + (d.sisa !== undefined ? d.sisa : Math.max(0, d.nominal - (d.terbayar || 0))), 0);
 
         const elTotal = document.getElementById('stat-total');
         const elEmerg = document.getElementById('stat-emergency');
@@ -3973,7 +4510,15 @@
           await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
 
         } else {
-          // Transaksi IN / OUT biasa
+          // Transaksi IN / OUT / PIUTANG / UTANG / PELUNASAN
+          const repaySelect = document.getElementById('repay-debt-select');
+          const isRepayActive = repaySelect && !document.getElementById('debt-repayment-box')?.classList.contains('hidden');
+          const repayDebtId = isRepayActive && repaySelect.value ? repaySelect.value : null;
+          const isFullPayment = document.getElementById('repay-mode-full')?.checked || false;
+
+          const namaPihak = document.getElementById('form-debt-party')?.value || '';
+          const jatuhTempo = document.getElementById('form-debt-due-date')?.value || '';
+
           const payload = {
             action: "addTransaction",
             tanggal: tDate,
@@ -3982,7 +4527,11 @@
             nominal: tNominal,
             kategori: tCat,
             akun: tAccount,
-            user: currentUser.name
+            user: currentUser.name,
+            namaPihak: namaPihak,
+            jatuhTempo: jatuhTempo,
+            repayDebtId: repayDebtId,
+            isFullPayment: isFullPayment
           };
           await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
 
@@ -4037,6 +4586,19 @@
       if (splitHint) splitHint.innerText = '';
       const splitSummary = document.getElementById('split-summary-text');
       if (splitSummary) splitSummary.classList.add('hidden');
+
+      const partyInput = document.getElementById('form-debt-party');
+      if (partyInput) partyInput.value = '';
+      const dueInput = document.getElementById('form-debt-due-date');
+      if (dueInput) dueInput.value = '';
+      const repayBox = document.getElementById('debt-repayment-box');
+      if (repayBox) repayBox.classList.add('hidden');
+      const repaySelect = document.getElementById('repay-debt-select');
+      if (repaySelect) repaySelect.value = '';
+      const repayInfo = document.getElementById('repay-debt-info');
+      if (repayInfo) repayInfo.classList.add('hidden');
+      const repayPartial = document.getElementById('repay-mode-partial');
+      if (repayPartial) repayPartial.checked = true;
 
       updateCategoryOptions();
       document.getElementById('modal-trx').classList.remove('hidden'); 
@@ -4175,6 +4737,746 @@
         }
       } catch (err) {
         alert("Error hapus transaksi: " + err.message);
+      }
+    }
+
+    // ==========================================
+    // BUKU CATATAN UTANG & PIUTANG REAL (LENDING & BORROWING)
+    // ==========================================
+    let currentDebtTab = 'PIUTANG';
+
+    function switchDebtTableTab(type) {
+      currentDebtTab = type;
+      const btnPiutang = document.getElementById('btn-debt-tab-piutang');
+      const btnUtang = document.getElementById('btn-debt-tab-utang');
+
+      if (type === 'PIUTANG') {
+        if (btnPiutang) {
+          btnPiutang.className = "px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-xs transition flex items-center gap-1.5";
+        }
+        if (btnUtang) {
+          btnUtang.className = "px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-slate-50 transition flex items-center gap-1.5";
+        }
+      } else {
+        if (btnPiutang) {
+          btnPiutang.className = "px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-emerald-600 hover:bg-slate-50 transition flex items-center gap-1.5";
+        }
+        if (btnUtang) {
+          btnUtang.className = "px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white shadow-xs transition flex items-center gap-1.5";
+        }
+      }
+      renderDebtsTable();
+      lucide.createIcons();
+    }
+
+    function renderDebtsTable() {
+      const debts = appData?.debts || [];
+      const showLunas = document.getElementById('check-show-lunas-debts')?.checked || false;
+
+      // 1. Hitung KPI Ringkasan
+      const piutangActive = debts.filter(d => d.tipe === 'PIUTANG' && d.status !== 'LUNAS')
+        .reduce((s, d) => s + (d.sisa !== undefined ? d.sisa : Math.max(0, d.nominal - (d.terbayar || 0))), 0);
+      const utangActive = debts.filter(d => d.tipe === 'UTANG' && d.status !== 'LUNAS')
+        .reduce((s, d) => s + (d.sisa !== undefined ? d.sisa : Math.max(0, d.nominal - (d.terbayar || 0))), 0);
+      const piutangRepaid = debts.filter(d => d.tipe === 'PIUTANG')
+        .reduce((s, d) => s + (d.terbayar || (d.status === 'LUNAS' ? d.nominal : 0)), 0);
+      const utangRepaid = debts.filter(d => d.tipe === 'UTANG')
+        .reduce((s, d) => s + (d.terbayar || (d.status === 'LUNAS' ? d.nominal : 0)), 0);
+
+      const elPActive = document.getElementById('kpi-piutang-active');
+      const elUActive = document.getElementById('kpi-utang-active');
+      const elPRepaid = document.getElementById('kpi-piutang-repaid');
+      const elURepaid = document.getElementById('kpi-utang-repaid');
+
+      if (elPActive) elPActive.innerText = formatIDR(piutangActive);
+      if (elUActive) elUActive.innerText = formatIDR(utangActive);
+      if (elPRepaid) elPRepaid.innerText = formatIDR(piutangRepaid);
+      if (elURepaid) elURepaid.innerText = formatIDR(utangRepaid);
+
+      // 2. Filter Tabel
+      const filtered = debts.filter(d => {
+        if (d.tipe !== currentDebtTab) return false;
+        if (!showLunas && d.status === 'LUNAS') return false;
+        return true;
+      });
+
+      const container = document.getElementById('debts-table-container');
+      if (!container) return;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <i data-lucide="inbox" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+            <p class="text-xs font-semibold text-slate-500">Tidak ada data ${currentDebtTab === 'PIUTANG' ? 'piutang' : 'utang'} ${showLunas ? '' : 'yang belum lunas'}.</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Catat baru menggunakan tombol di atas atau melalui Modal Tambah Transaksi.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      let html = `
+        <table class="w-full text-left text-xs sm:text-sm">
+          <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 uppercase text-[11px] tracking-wider">
+            <tr>
+              <th class="p-3.5">ID & Tanggal</th>
+              <th class="p-3.5">${currentDebtTab === 'PIUTANG' ? 'Nama Peminjam' : 'Pemberi Pinjaman'}</th>
+              <th class="p-3.5">Keterangan</th>
+              <th class="p-3.5">Akun Terkait</th>
+              <th class="p-3.5">Total Pokok</th>
+              <th class="p-3.5">Terbayar</th>
+              <th class="p-3.5">Sisa Tagihan</th>
+              <th class="p-3.5">Jatuh Tempo</th>
+              <th class="p-3.5 text-center">Status</th>
+              <th class="p-3.5 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-slate-700">
+      `;
+
+      filtered.forEach(d => {
+        const sisa = d.sisa !== undefined ? d.sisa : Math.max(0, d.nominal - (d.terbayar || 0));
+        const terbayar = d.terbayar || (d.status === 'LUNAS' ? d.nominal : 0);
+        const isLunas = d.status === 'LUNAS' || sisa <= 0;
+        const isSebagian = !isLunas && terbayar > 0;
+
+        let statusBadge = '';
+        if (isLunas) {
+          statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">LUNAS</span>';
+        } else if (isSebagian) {
+          statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">SEBAGIAN</span>';
+        } else {
+          statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">BELUM</span>';
+        }
+
+        html += `
+          <tr class="hover:bg-slate-50/70 transition">
+            <td class="p-3.5 whitespace-nowrap">
+              <span class="font-bold text-slate-900 font-mono">${d.id}</span>
+              <span class="block text-[11px] text-slate-400">${d.tanggal}</span>
+            </td>
+            <td class="p-3.5 font-semibold text-slate-800">${d.nama || '-'}</td>
+            <td class="p-3.5 text-slate-600 max-w-xs truncate" title="${d.keterangan || ''}">${d.keterangan || '-'}</td>
+            <td class="p-3.5 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700">${d.akun || 'Cash'}</span>
+            </td>
+            <td class="p-3.5 whitespace-nowrap font-bold text-slate-900">${formatIDR(d.nominal)}</td>
+            <td class="p-3.5 whitespace-nowrap font-semibold text-emerald-600">${formatIDR(terbayar)}</td>
+            <td class="p-3.5 whitespace-nowrap font-bold ${sisa > 0 ? 'text-rose-600' : 'text-slate-400'}">${formatIDR(sisa)}</td>
+            <td class="p-3.5 whitespace-nowrap text-slate-500 text-xs">${d.jatuhTempo || '-'}</td>
+            <td class="p-3.5 text-center whitespace-nowrap">${statusBadge}</td>
+            <td class="p-3.5 text-center whitespace-nowrap">
+              <div class="flex items-center justify-center gap-1.5">
+                ${!isLunas ? `
+                  <button onclick="openModalRepayDebt('${d.id}')" title="Catat Cicilan / Pelunasan" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs">
+                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-indigo-600"></i> Bayar
+                  </button>
+                ` : ''}
+                <button onclick="toggleDebtStatus('${d.id}')" title="Ubah Status (Lunas / Belum)" class="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition">
+                  <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteDebt('${d.id}')" title="Hapus Data" class="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `
+          </tbody>
+        </table>
+      `;
+
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function openModalRepayDebt(debtId) {
+      const debts = appData?.debts || [];
+      const d = debts.find(item => item.id === debtId);
+      if (!d) return alert("Data utang/piutang tidak ditemukan.");
+
+      openModalTrx();
+      const formType = document.getElementById('form-type');
+      const formCat = document.getElementById('form-cat');
+
+      if (d.tipe === 'PIUTANG') {
+        if (formType) formType.value = 'IN';
+        updateCategoryOptions();
+        if (formCat) formCat.value = 'Orang Lain Bayar Utang';
+      } else {
+        if (formType) formType.value = 'OUT';
+        updateCategoryOptions();
+        if (formCat) formCat.value = 'Bayar Utang Keluarga';
+      }
+
+      checkDebtRepaymentCategory();
+
+      const repaySelect = document.getElementById('repay-debt-select');
+      if (repaySelect) {
+        repaySelect.value = debtId;
+        onRepayDebtSelectChange();
+      }
+
+      const fullRadio = document.getElementById('repay-mode-full');
+      if (fullRadio) {
+        fullRadio.checked = true;
+        onRepayModeChange();
+      }
+
+      lucide.createIcons();
+    }
+
+    function openModalDebtFast(type) {
+      openModalTrx();
+      const formType = document.getElementById('form-type');
+      if (formType) {
+        formType.value = type;
+        updateCategoryOptions();
+      }
+      lucide.createIcons();
+    }
+
+    async function toggleDebtStatus(id) {
+      try {
+        const res = await fetch(GAS_API_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "toggleUtangStatus", id: id })
+        });
+        const data = await res.json();
+        if (data.success) {
+          fetchDashboardData();
+        } else {
+          alert("Gagal mengubah status: " + (data.message || "Unknown error"));
+        }
+      } catch (err) {
+        alert("Error update status utang: " + err.message);
+      }
+    }
+
+    async function deleteDebt(id) {
+      if (!confirm(`Hapus catatan utang/piutang [${id}] ini secara permanen?`)) return;
+      try {
+        const res = await fetch(GAS_API_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "deleteUtang", id: id })
+        });
+        const data = await res.json();
+        if (data.success) {
+          fetchDashboardData();
+        } else {
+          alert("Gagal menghapus: " + (data.message || "Unknown error"));
+        }
+      } catch (err) {
+        alert("Error hapus utang/piutang: " + err.message);
+      }
+    }
+
+    // ==========================================
+    // PEMBATASAN PENGELUARAN HARIAN & MULTI-DAY ROLLOVER ENGINE
+    // ==========================================
+    const DAILY_LIMIT_KEY = 'family_daily_limit_config';
+
+    function getDailyLimitConfig() {
+      const saved = localStorage.getItem(DAILY_LIMIT_KEY);
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) {}
+      }
+      return {
+        defaultDailyLimit: 150000,
+        rolloverEnabled: true,
+        spreadDays: 3,
+        categories: {
+          konsumsi: 50,
+          jalanjalan: 20,
+          transport: 15,
+          lainnya: 15
+        }
+      };
+    }
+
+    function saveDailyLimitConfig(cfg) {
+      localStorage.setItem(DAILY_LIMIT_KEY, JSON.stringify(cfg));
+    }
+
+    function openDailyLimitSettings() {
+      const cfg = getDailyLimitConfig();
+      const limitInput = document.getElementById('setting-daily-limit');
+      const rolloverChk = document.getElementById('setting-rollover-enabled');
+      const spreadSelect = document.getElementById('setting-spread-days');
+      const pctKonsumsi = document.getElementById('setting-pct-konsumsi');
+      const pctJalan = document.getElementById('setting-pct-jalanjalan');
+      const pctTransport = document.getElementById('setting-pct-transport');
+      const pctLainnya = document.getElementById('setting-pct-lainnya');
+
+      if (limitInput) limitInput.value = cfg.defaultDailyLimit || 150000;
+      if (rolloverChk) rolloverChk.checked = cfg.rolloverEnabled !== false;
+      if (spreadSelect) spreadSelect.value = String(cfg.spreadDays || 3);
+      if (pctKonsumsi) pctKonsumsi.value = cfg.categories?.konsumsi ?? 50;
+      if (pctJalan) pctJalan.value = cfg.categories?.jalanjalan ?? 20;
+      if (pctTransport) pctTransport.value = cfg.categories?.transport ?? 15;
+      if (pctLainnya) pctLainnya.value = cfg.categories?.lainnya ?? 15;
+
+      toggleRolloverInputs();
+      updateDailyCategoryNominalsPreview();
+
+      const modal = document.getElementById('modal-daily-limit-settings');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+      lucide.createIcons();
+    }
+
+    function closeDailyLimitSettings() {
+      const modal = document.getElementById('modal-daily-limit-settings');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function toggleRolloverInputs() {
+      const chk = document.getElementById('setting-rollover-enabled');
+      const details = document.getElementById('setting-rollover-details');
+      if (chk && details) {
+        if (chk.checked) details.classList.remove('opacity-40', 'pointer-events-none');
+        else details.classList.add('opacity-40', 'pointer-events-none');
+      }
+    }
+
+    function updateDailyCategoryNominalsPreview() {
+      const limit = parseFloat(document.getElementById('setting-daily-limit')?.value) || 0;
+      const k = parseFloat(document.getElementById('setting-pct-konsumsi')?.value) || 0;
+      const j = parseFloat(document.getElementById('setting-pct-jalanjalan')?.value) || 0;
+      const t = parseFloat(document.getElementById('setting-pct-transport')?.value) || 0;
+      const l = parseFloat(document.getElementById('setting-pct-lainnya')?.value) || 0;
+
+      const nomK = Math.round(limit * (k / 100));
+      const nomJ = Math.round(limit * (j / 100));
+      const nomT = Math.round(limit * (t / 100));
+      const nomL = Math.round(limit * (l / 100));
+
+      const elK = document.getElementById('preview-nominal-konsumsi');
+      const elJ = document.getElementById('preview-nominal-jalanjalan');
+      const elT = document.getElementById('preview-nominal-transport');
+      const elL = document.getElementById('preview-nominal-lainnya');
+      if (elK) elK.innerText = `${formatIDR(nomK)} / hari`;
+      if (elJ) elJ.innerText = `${formatIDR(nomJ)} / hari`;
+      if (elT) elT.innerText = `${formatIDR(nomT)} / hari`;
+      if (elL) elL.innerText = `${formatIDR(nomL)} / hari`;
+
+      const totalPct = k + j + t + l;
+      const badge = document.getElementById('setting-cat-total-badge');
+      if (badge) {
+        badge.innerText = `Total: ${totalPct}%`;
+        if (totalPct === 100) {
+          badge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800";
+        } else {
+          badge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800";
+        }
+      }
+    }
+
+    function saveDailyLimitSettings(e) {
+      e.preventDefault();
+      const limit = parseFloat(document.getElementById('setting-daily-limit')?.value) || 150000;
+      const rollover = document.getElementById('setting-rollover-enabled')?.checked || false;
+      const spread = parseInt(document.getElementById('setting-spread-days')?.value, 10) || 3;
+      const k = parseFloat(document.getElementById('setting-pct-konsumsi')?.value) || 0;
+      const j = parseFloat(document.getElementById('setting-pct-jalanjalan')?.value) || 0;
+      const t = parseFloat(document.getElementById('setting-pct-transport')?.value) || 0;
+      const l = parseFloat(document.getElementById('setting-pct-lainnya')?.value) || 0;
+
+      const totalPct = k + j + t + l;
+      if (totalPct !== 100) {
+        if (!confirm(`Total alokasi saat ini ${totalPct}% (bukan 100%). Tetap ingin menyimpan?`)) {
+          return;
+        }
+      }
+
+      const cfg = {
+        defaultDailyLimit: limit,
+        rolloverEnabled: rollover,
+        spreadDays: spread,
+        categories: {
+          konsumsi: k,
+          jalanjalan: j,
+          transport: t,
+          lainnya: l
+        }
+      };
+
+      saveDailyLimitConfig(cfg);
+      closeDailyLimitSettings();
+      renderDailyLimitTab();
+    }
+
+    let selectedDailyYear = new Date().getFullYear();
+    let selectedDailyMonth = new Date().getMonth(); // 0 - 11
+
+    function initDailyLimitTab() {
+      const monthSelect = document.getElementById('daily-month-select');
+      const yearSelect = document.getElementById('daily-year-select');
+
+      if (monthSelect && monthSelect.options.length === 0) {
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        monthNames.forEach((m, idx) => {
+          const opt = document.createElement('option');
+          opt.value = idx;
+          opt.text = m;
+          if (idx === selectedDailyMonth) opt.selected = true;
+          monthSelect.appendChild(opt);
+        });
+      }
+
+      if (yearSelect && yearSelect.options.length === 0) {
+        const currentY = new Date().getFullYear();
+        for (let y = currentY - 2; y <= currentY + 2; y++) {
+          const opt = document.createElement('option');
+          opt.value = y;
+          opt.text = y;
+          if (y === selectedDailyYear) opt.selected = true;
+          yearSelect.appendChild(opt);
+        }
+      }
+
+      renderDailyLimitTab();
+    }
+
+    function onDailyPeriodChange() {
+      const mSel = document.getElementById('daily-month-select');
+      const ySel = document.getElementById('daily-year-select');
+      if (mSel) selectedDailyMonth = parseInt(mSel.value, 10);
+      if (ySel) selectedDailyYear = parseInt(ySel.value, 10);
+      renderDailyLimitTab();
+    }
+
+    function classifyExpenseCategory(catName) {
+      const c = (catName || '').toLowerCase();
+      if (c.includes('makan') || c.includes('minum') || c.includes('konsumsi') || c.includes('dapur') || c.includes('jajan') || c.includes('ngopi') || c.includes('belanja bulanan') || c.includes('sembako')) {
+        return 'konsumsi';
+      }
+      if (c.includes('jalan') || c.includes('hiburan') || c.includes('liburan') || c.includes('hangout') || c.includes('nongkrong') || c.includes('hobi') || c.includes('wisata') || c.includes('rekreasi') || c.includes('streaming')) {
+        return 'jalanjalan';
+      }
+      if (c.includes('transport') || c.includes('bbm') || c.includes('bensin') || c.includes('tol') || c.includes('parkir') || c.includes('ojol') || c.includes('kendaraan')) {
+        return 'transport';
+      }
+      return 'lainnya';
+    }
+
+    function computeDailyExpenseEngine(year, month) {
+      const cfg = getDailyLimitConfig();
+      const baseLimit = cfg.defaultDailyLimit || 150000;
+      const spreadDays = cfg.spreadDays || 3;
+      const rolloverEnabled = cfg.rolloverEnabled !== false;
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+      // 1. Ekstraksi transaksi OUT pada bulan ini
+      const monthExpenses = (appData?.transactions || []).filter(t => t.tipe === 'OUT' && t.tanggal && t.tanggal.startsWith(prefix));
+
+      const dailySums = {};
+      const dailyCatSums = {};
+      const dailyTrxMap = {};
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        dailySums[d] = 0;
+        dailyCatSums[d] = { konsumsi: 0, jalanjalan: 0, transport: 0, lainnya: 0 };
+        dailyTrxMap[d] = [];
+      }
+
+      monthExpenses.forEach(t => {
+        const day = parseInt(t.tanggal.slice(8, 10), 10);
+        if (day >= 1 && day <= daysInMonth) {
+          const nominal = parseFloat(t.nominal) || 0;
+          dailySums[day] += nominal;
+          dailyTrxMap[day].push(t);
+
+          const group = classifyExpenseCategory(t.kategori);
+          dailyCatSums[day][group] = (dailyCatSums[day][group] || 0) + nominal;
+        }
+      });
+
+      // 2. Simulasi Rollover Defisit Multi-Day
+      const carryOver = new Array(daysInMonth + 1).fill(0);
+      const daysResult = [];
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const deduction = rolloverEnabled ? (carryOver[day] || 0) : 0;
+        const effectiveLimit = Math.max(0, baseLimit - deduction);
+        const spent = dailySums[day] || 0;
+        const diff = spent - effectiveLimit; // > 0 means overspent
+
+        if (rolloverEnabled && diff > 0 && spreadDays > 0) {
+          const spreadAmount = diff / spreadDays;
+          for (let s = 1; s <= spreadDays; s++) {
+            const targetDay = day + s;
+            if (targetDay <= daysInMonth) {
+              carryOver[targetDay] += spreadAmount;
+            }
+          }
+        }
+
+        const dateStr = `${prefix}-${String(day).padStart(2, '0')}`;
+        const dayOfWeek = new Date(year, month, day).getDay();
+        const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+        daysResult.push({
+          day,
+          dateStr,
+          dayLabel: `${dayNames[dayOfWeek]}, ${day} ${['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][month]}`,
+          baseLimit,
+          deduction,
+          effectiveLimit,
+          spent,
+          balance: effectiveLimit - spent,
+          isOver: diff > 0,
+          categories: dailyCatSums[day],
+          transactions: dailyTrxMap[day]
+        });
+      }
+
+      return {
+        cfg,
+        daysResult,
+        daysInMonth,
+        prefix
+      };
+    }
+
+    function renderDailyLimitTab() {
+      const engine = computeDailyExpenseEngine(selectedDailyYear, selectedDailyMonth);
+      const cfg = engine.cfg;
+      const today = new Date();
+      const isCurrentMonth = (today.getFullYear() === selectedDailyYear && today.getMonth() === selectedDailyMonth);
+      const currentDay = isCurrentMonth ? today.getDate() : 1;
+
+      const todayData = engine.daysResult[currentDay - 1] || {
+        baseLimit: cfg.defaultDailyLimit,
+        deduction: 0,
+        effectiveLimit: cfg.defaultDailyLimit,
+        spent: 0,
+        balance: cfg.defaultDailyLimit,
+        isOver: false,
+        categories: { konsumsi: 0, jalanjalan: 0, transport: 0, lainnya: 0 },
+        transactions: []
+      };
+
+      // 1. Update 4 KPI
+      const elBase = document.getElementById('stat-daily-base-limit');
+      const elSpread = document.getElementById('stat-daily-spread-info');
+      const elEff = document.getElementById('stat-daily-effective-today');
+      const elDeduct = document.getElementById('stat-daily-deduction-info');
+      const elSpent = document.getElementById('stat-daily-spent-today');
+      const elTrxCount = document.getElementById('stat-daily-trx-count');
+      const elSisa = document.getElementById('stat-daily-sisa-today');
+      const elBadge = document.getElementById('stat-daily-badge-today');
+
+      if (elBase) elBase.innerText = formatIDR(cfg.defaultDailyLimit);
+      if (elSpread) elSpread.innerText = cfg.rolloverEnabled ? `Distribusi defisit: ${cfg.spreadDays} hari` : `Rollover: Dinonaktifkan`;
+
+      if (elEff) elEff.innerText = formatIDR(todayData.effectiveLimit);
+      if (elDeduct) {
+        elDeduct.innerText = todayData.deduction > 0
+          ? `Potongan defisit kemarin: -${formatIDR(todayData.deduction)}`
+          : `Tidak ada beban defisit kemarin`;
+        elDeduct.className = todayData.deduction > 0 ? "text-[11px] text-rose-600 font-semibold mt-1" : "text-[11px] text-slate-500 mt-1";
+      }
+
+      if (elSpent) elSpent.innerText = formatIDR(todayData.spent);
+      if (elTrxCount) elTrxCount.innerText = `${todayData.transactions.length} transaksi dicatat ${isCurrentMonth ? 'hari ini' : 'pada tanggal 1'}`;
+
+      if (elSisa) {
+        elSisa.innerText = formatIDR(Math.abs(todayData.balance));
+        if (todayData.balance >= 0) {
+          elSisa.className = "text-2xl font-bold text-emerald-600 mt-1";
+        } else {
+          elSisa.className = "text-2xl font-bold text-rose-600 mt-1";
+        }
+      }
+
+      if (elBadge) {
+        if (todayData.balance < 0) {
+          elBadge.className = "mt-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800";
+          elBadge.innerText = `Overspent (Defisit dibagi ${cfg.spreadDays} hari)`;
+        } else if (todayData.spent > todayData.effectiveLimit * 0.8) {
+          elBadge.className = "mt-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800";
+          elBadge.innerText = `Waspada (Sisa kuota menipis)`;
+        } else {
+          elBadge.className = "mt-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800";
+          elBadge.innerText = `Aman & Sesuai Kuota`;
+        }
+      }
+
+      // 2. Breakdown Kategori Hari Ini
+      const catDateLabel = document.getElementById('daily-categories-date-label');
+      if (catDateLabel) {
+        catDateLabel.innerText = isCurrentMonth ? `Hari ini (${todayData.dayLabel})` : `Tanggal 1 (${todayData.dayLabel})`;
+      }
+
+      const catContainer = document.getElementById('daily-categories-progress');
+      if (catContainer) {
+        const catConfig = cfg.categories || { konsumsi: 50, jalanjalan: 20, transport: 15, lainnya: 15 };
+        const categoriesMeta = [
+          { key: 'konsumsi', label: 'Konsumsi (Makan & Minum)', color: 'bg-emerald-500', textCol: 'text-emerald-700' },
+          { key: 'jalanjalan', label: 'Jalan-Jalan / Gaya Hidup', color: 'bg-amber-500', textCol: 'text-amber-700' },
+          { key: 'transport', label: 'Transportasi & BBM', color: 'bg-indigo-500', textCol: 'text-indigo-700' },
+          { key: 'lainnya', label: 'Kebutuhan Lainnya', color: 'bg-purple-500', textCol: 'text-purple-700' }
+        ];
+
+        let catHtml = '';
+        categoriesMeta.forEach(meta => {
+          const pct = catConfig[meta.key] || 0;
+          const nominalBudget = Math.round(todayData.effectiveLimit * (pct / 100));
+          const actualSpent = todayData.categories[meta.key] || 0;
+          const usagePct = nominalBudget > 0 ? Math.min(100, Math.round((actualSpent / nominalBudget) * 100)) : (actualSpent > 0 ? 100 : 0);
+          const isOver = actualSpent > nominalBudget;
+
+          catHtml += `
+            <div class="p-4 rounded-xl border border-slate-100 bg-slate-50/70 space-y-2">
+              <div class="flex justify-between items-start">
+                <span class="text-xs font-bold text-slate-700">${meta.label}</span>
+                <span class="text-[11px] font-bold ${isOver ? 'text-rose-600' : meta.textCol}">${pct}% (${formatIDR(nominalBudget)})</span>
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                <div class="${isOver ? 'bg-rose-500' : meta.color} h-2 rounded-full transition-all" style="width: ${usagePct}%"></div>
+              </div>
+              <div class="flex justify-between items-center text-[11px]">
+                <span class="text-slate-500">Terpakai: <b class="${isOver ? 'text-rose-600' : 'text-slate-800'}">${formatIDR(actualSpent)}</b></span>
+                <span class="font-bold ${isOver ? 'text-rose-600' : 'text-emerald-600'}">
+                  ${isOver ? `+${formatIDR(actualSpent - nominalBudget)} (Lebih)` : `Sisa ${formatIDR(nominalBudget - actualSpent)}`}
+                </span>
+              </div>
+            </div>
+          `;
+        });
+        catContainer.innerHTML = catHtml;
+      }
+
+      // 3. Render Tabel Kalender Harian
+      const tbody = document.getElementById('daily-table-body');
+      if (tbody) {
+        let tableHtml = '';
+        engine.daysResult.forEach(row => {
+          const isTodayRow = isCurrentMonth && row.day === currentDay;
+          let statusBadge = '';
+
+          if (row.isOver) {
+            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Defisit (-${formatIDR(Math.abs(row.balance))})</span>`;
+          } else if (row.spent > row.effectiveLimit * 0.8 && row.effectiveLimit > 0) {
+            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Waspada</span>`;
+          } else {
+            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Hemat / Aman</span>`;
+          }
+
+          tableHtml += `
+            <tr class="${isTodayRow ? 'bg-indigo-50/60 font-medium border-l-4 border-indigo-600' : 'hover:bg-slate-50/70'} transition">
+              <td class="p-3.5 whitespace-nowrap">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-slate-800">${row.dayLabel}</span>
+                  ${isTodayRow ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-600 text-white uppercase">Hari Ini</span>' : ''}
+                </div>
+              </td>
+              <td class="p-3.5 whitespace-nowrap text-slate-600">${formatIDR(row.baseLimit)}</td>
+              <td class="p-3.5 whitespace-nowrap ${row.deduction > 0 ? 'text-rose-600 font-semibold' : 'text-slate-400'}">
+                ${row.deduction > 0 ? `-${formatIDR(row.deduction)}` : '-'}
+              </td>
+              <td class="p-3.5 whitespace-nowrap font-bold text-indigo-700">${formatIDR(row.effectiveLimit)}</td>
+              <td class="p-3.5 whitespace-nowrap font-bold ${row.spent > 0 ? 'text-slate-900' : 'text-slate-400'}">
+                ${formatIDR(row.spent)}
+              </td>
+              <td class="p-3.5 whitespace-nowrap font-bold ${row.balance < 0 ? 'text-rose-600' : 'text-emerald-600'}">
+                ${row.balance < 0 ? `-${formatIDR(Math.abs(row.balance))}` : `+${formatIDR(row.balance)}`}
+              </td>
+              <td class="p-3.5 text-center whitespace-nowrap">${statusBadge}</td>
+              <td class="p-3.5 text-center whitespace-nowrap">
+                <button onclick="showDailyTrxDetail('${row.dateStr}')" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 transition flex items-center gap-1 mx-auto shadow-2xs">
+                  <i data-lucide="receipt" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <span>${row.transactions.length} Trx</span>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+        tbody.innerHTML = tableHtml;
+      }
+
+      lucide.createIcons();
+    }
+
+    let activeDetailDate = null;
+
+    function showDailyTrxDetail(dateStr) {
+      activeDetailDate = dateStr;
+      const list = (appData?.transactions || []).filter(t => t.tipe === 'OUT' && t.tanggal === dateStr);
+      const total = list.reduce((s, t) => s + (parseFloat(t.nominal) || 0), 0);
+
+      const dateLabel = document.getElementById('modal-daily-detail-date');
+      const sumLabel = document.getElementById('modal-daily-detail-summary');
+      const container = document.getElementById('modal-daily-detail-list');
+
+      if (dateLabel) dateLabel.innerText = dateStr;
+      if (sumLabel) sumLabel.innerText = `Total Pengeluaran: ${formatIDR(total)} (${list.length} transaksi)`;
+
+      if (container) {
+        if (list.length === 0) {
+          container.innerHTML = `
+            <div class="p-6 text-center text-slate-400 text-xs italic bg-slate-50 rounded-xl">
+              Belum ada transaksi pengeluaran yang dicatat pada tanggal ini.
+            </div>
+          `;
+        } else {
+          let html = '';
+          list.forEach(t => {
+            html += `
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-2">
+                <div class="space-y-0.5">
+                  <p class="font-bold text-slate-800 text-xs">${t.keterangan || '-'}</p>
+                  <div class="flex items-center gap-2 text-[10px] text-slate-500">
+                    <span class="px-2 py-0.5 bg-white border border-slate-200 rounded font-semibold">${t.kategori || 'Umum'}</span>
+                    <span>&bull;</span>
+                    <span>Rekening: <b>${t.akun || 'Cash'}</b></span>
+                    <span>&bull;</span>
+                    <span>User: ${t.user || '-'}</span>
+                  </div>
+                </div>
+                <div class="text-right whitespace-nowrap">
+                  <span class="font-bold text-slate-900 text-xs">${formatIDR(t.nominal)}</span>
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        }
+      }
+
+      const modal = document.getElementById('modal-daily-trx-detail');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+      lucide.createIcons();
+    }
+
+    function closeModalDailyTrxDetail() {
+      const modal = document.getElementById('modal-daily-trx-detail');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function openModalTrxForDate() {
+      closeModalDailyTrxDetail();
+      openModalTrx();
+      if (activeDetailDate) {
+        const dateInput = document.getElementById('form-date');
+        if (dateInput) dateInput.value = activeDetailDate;
       }
     }
 
