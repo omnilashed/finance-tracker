@@ -542,6 +542,13 @@
           </div>
           <div class="flex flex-wrap items-center gap-2.5">
             <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs">
+              <label class="font-semibold text-slate-500">Cakupan:</label>
+              <select id="daily-scope-select" onchange="onDailyPeriodChange()" class="bg-transparent font-bold text-indigo-700 outline-none cursor-pointer">
+                <option value="operational" selected>Belanja Harian (Rekomendasi)</option>
+                <option value="all">Semua Pengeluaran</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs">
               <label class="font-semibold text-slate-500">Bulan:</label>
               <select id="daily-month-select" onchange="onDailyPeriodChange()" class="bg-transparent font-bold text-indigo-700 outline-none cursor-pointer">
                 <!-- 0-11 months -->
@@ -1473,6 +1480,18 @@
             <input type="number" id="setting-daily-limit" required min="1000" step="1000" placeholder="150000" class="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-indigo-900 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500" oninput="updateDailyCategoryNominalsPreview()">
           </div>
           <p class="text-[11px] text-slate-400 mt-1">Batas belanja dasar setiap hari sebelum kompensasi defisit.</p>
+        </div>
+
+        <!-- Cakupan Kategori yang Dibatasi -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1.5">
+          <label class="font-bold text-slate-700 block text-xs">Cakupan Kategori yang Dihitung Limit Harian</label>
+          <select id="setting-scope" class="w-full p-2 border border-slate-200 rounded-lg text-xs font-semibold text-indigo-900 bg-white">
+            <option value="operational">Hanya Belanja Harian & Operasional (Rekomendasi)</option>
+            <option value="all">Semua Pengeluaran (Termasuk Cicilan KPR, Utang & Tagihan Bulanan)</option>
+          </select>
+          <p class="text-[10px] text-slate-500 leading-relaxed">
+            Mode <b>Belanja Harian</b> otomatis mengecualikan pos komitmen bulanan (Cicilan KPR, Utang, Tagihan Listrik/Wifi, Memberi Ortu, Bantuan Keluarga Besar, dan Tabungan/Investasi) agar limit harian konsumsi/transport keluarga tidak terkontaminasi oleh pengeluaran bulanan jutaan rupiah.
+          </p>
         </div>
 
         <!-- Pengaturan Rollover Multi-Day -->
@@ -4979,6 +4998,20 @@
     // ==========================================
     const DAILY_LIMIT_KEY = 'family_daily_limit_config';
 
+    const EXCLUDED_FROM_DAILY = [
+      'cicilan kpr', 'cicilan utang', 'cicilan kendaraan', 'cicilan elektronik',
+      'paylater & pinjaman', 'kartu kredit', 'tagihan & utilitas', 'tagihan',
+      'memberi orang tua', 'membantu keluarga & kerabat', 'tabungan masa depan',
+      'tabungan investasi', 'investasi', 'dana darurat', 'transfer', 'tarik tunai',
+      'setor tunai', 'piutang', 'pinjaman'
+    ];
+
+    function isDailyOperationalCategory(cat) {
+      if (!cat) return true;
+      const lower = cat.toLowerCase().trim();
+      return !EXCLUDED_FROM_DAILY.some(exc => lower.includes(exc));
+    }
+
     function getDailyLimitConfig() {
       const saved = localStorage.getItem(DAILY_LIMIT_KEY);
       if (saved) {
@@ -4988,6 +5021,7 @@
         defaultDailyLimit: 150000,
         rolloverEnabled: true,
         spreadDays: 3,
+        scope: 'operational',
         categories: {
           konsumsi: 50,
           jalanjalan: 20,
@@ -5004,6 +5038,7 @@
     function openDailyLimitSettings() {
       const cfg = getDailyLimitConfig();
       const limitInput = document.getElementById('setting-daily-limit');
+      const scopeSelect = document.getElementById('setting-scope');
       const rolloverChk = document.getElementById('setting-rollover-enabled');
       const spreadSelect = document.getElementById('setting-spread-days');
       const pctKonsumsi = document.getElementById('setting-pct-konsumsi');
@@ -5012,6 +5047,7 @@
       const pctLainnya = document.getElementById('setting-pct-lainnya');
 
       if (limitInput) limitInput.value = cfg.defaultDailyLimit || 150000;
+      if (scopeSelect) scopeSelect.value = cfg.scope || 'operational';
       if (rolloverChk) rolloverChk.checked = cfg.rolloverEnabled !== false;
       if (spreadSelect) spreadSelect.value = String(cfg.spreadDays || 3);
       if (pctKonsumsi) pctKonsumsi.value = cfg.categories?.konsumsi ?? 50;
@@ -5083,6 +5119,7 @@
     function saveDailyLimitSettings(e) {
       e.preventDefault();
       const limit = parseFloat(document.getElementById('setting-daily-limit')?.value) || 150000;
+      const scope = document.getElementById('setting-scope')?.value || 'operational';
       const rollover = document.getElementById('setting-rollover-enabled')?.checked || false;
       const spread = parseInt(document.getElementById('setting-spread-days')?.value, 10) || 3;
       const k = parseFloat(document.getElementById('setting-pct-konsumsi')?.value) || 0;
@@ -5099,6 +5136,7 @@
 
       const cfg = {
         defaultDailyLimit: limit,
+        scope: scope,
         rolloverEnabled: rollover,
         spreadDays: spread,
         categories: {
@@ -5110,6 +5148,9 @@
       };
 
       saveDailyLimitConfig(cfg);
+      const scopeDropdown = document.getElementById('daily-scope-select');
+      if (scopeDropdown) scopeDropdown.value = scope;
+
       closeDailyLimitSettings();
       renderDailyLimitTab();
     }
@@ -5120,6 +5161,12 @@
     function initDailyLimitTab() {
       const monthSelect = document.getElementById('daily-month-select');
       const yearSelect = document.getElementById('daily-year-select');
+      const scopeSelect = document.getElementById('daily-scope-select');
+      const cfg = getDailyLimitConfig();
+
+      if (scopeSelect) {
+        scopeSelect.value = cfg.scope || 'operational';
+      }
 
       if (monthSelect && monthSelect.options.length === 0) {
         const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -5171,14 +5218,21 @@
     function computeDailyExpenseEngine(year, month) {
       const cfg = getDailyLimitConfig();
       const baseLimit = cfg.defaultDailyLimit || 150000;
-      const spreadDays = cfg.spreadDays || 3;
+      const spreadDays = Math.max(1, cfg.spreadDays || 3);
       const rolloverEnabled = cfg.rolloverEnabled !== false;
+      const scope = document.getElementById('daily-scope-select')?.value || cfg.scope || 'operational';
 
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
 
-      // 1. Ekstraksi transaksi OUT pada bulan ini
-      const monthExpenses = (appData?.transactions || []).filter(t => t.tipe === 'OUT' && t.tanggal && t.tanggal.startsWith(prefix));
+      // 1. Ekstraksi transaksi OUT pada bulan ini sesuai cakupan (operational vs all)
+      const monthExpenses = (appData?.transactions || []).filter(t => {
+        if (t.tipe !== 'OUT' || !t.tanggal || !t.tanggal.startsWith(prefix)) return false;
+        if (scope === 'operational') {
+          return isDailyOperationalCategory(t.kategori);
+        }
+        return true;
+      });
 
       const dailySums = {};
       const dailyCatSums = {};
@@ -5202,23 +5256,41 @@
         }
       });
 
-      // 2. Simulasi Rollover Defisit Multi-Day
-      const carryOver = new Array(daysInMonth + 1).fill(0);
+      // 2. Simulasi Rollover Defisit Multi-Day yang Presisi & Anti-Compounding
+      const schedule = new Array(daysInMonth + spreadDays + 10).fill(0);
       const daysResult = [];
+      const today = new Date();
+      const isCurrentMonth = (today.getFullYear() === year && today.getMonth() === month);
+      const currentDay = isCurrentMonth ? today.getDate() : 999;
 
       for (let day = 1; day <= daysInMonth; day++) {
-        const deduction = rolloverEnabled ? (carryOver[day] || 0) : 0;
+        const isPastOrToday = day <= currentDay;
+        const rawDeduction = rolloverEnabled ? (schedule[day] || 0) : 0;
+        // Batasi potongan maksimal 70% dari limit dasar agar limit efektif tidak drop ke 0 atau minus
+        const maxDeduction = Math.round(baseLimit * 0.70);
+        const deduction = Math.min(maxDeduction, Math.round(rawDeduction));
         const effectiveLimit = Math.max(0, baseLimit - deduction);
-        const spent = dailySums[day] || 0;
-        const diff = spent - effectiveLimit; // > 0 means overspent
 
-        if (rolloverEnabled && diff > 0 && spreadDays > 0) {
-          const spreadAmount = diff / spreadDays;
-          for (let s = 1; s <= spreadDays; s++) {
-            const targetDay = day + s;
-            if (targetDay <= daysInMonth) {
-              carryOver[targetDay] += spreadAmount;
+        const spent = dailySums[day] || 0;
+
+        // Distribusi overspend hanya dihitung jika hari tersebut sudah berlangsung/hari ini
+        if (rolloverEnabled && isPastOrToday) {
+          // A. Overspend baru di atas limit dasar:
+          const newOverspend = Math.max(0, spent - baseLimit);
+          if (newOverspend > 0 && spreadDays > 0) {
+            const slice = newOverspend / spreadDays;
+            for (let s = 1; s <= spreadDays; s++) {
+              schedule[day + s] = (schedule[day + s] || 0) + slice;
             }
+          }
+
+          // B. Penyerapan potongan terjadwal:
+          // Jika belanja hari ini di bawah limit dasar, selisih hematnya dipakai menyerap potongan.
+          // Sisa potongan yang belum terserap digeser maju ke (day + spreadDays) tanpa digandakan.
+          const absorbed = Math.min(deduction, Math.max(0, baseLimit - spent));
+          const unabsorbed = deduction - absorbed;
+          if (unabsorbed > 0 && spreadDays > 0) {
+            schedule[day + spreadDays] = (schedule[day + spreadDays] || 0) + unabsorbed;
           }
         }
 
@@ -5235,7 +5307,8 @@
           effectiveLimit,
           spent,
           balance: effectiveLimit - spent,
-          isOver: diff > 0,
+          isOver: spent > effectiveLimit && isPastOrToday,
+          isPastOrToday,
           categories: dailyCatSums[day],
           transactions: dailyTrxMap[day]
         });
@@ -5243,6 +5316,7 @@
 
       return {
         cfg,
+        scope,
         daysResult,
         daysInMonth,
         prefix
@@ -5263,6 +5337,7 @@
         spent: 0,
         balance: cfg.defaultDailyLimit,
         isOver: false,
+        isPastOrToday: true,
         categories: { konsumsi: 0, jalanjalan: 0, transport: 0, lainnya: 0 },
         transactions: []
       };
@@ -5278,13 +5353,13 @@
       const elBadge = document.getElementById('stat-daily-badge-today');
 
       if (elBase) elBase.innerText = formatIDR(cfg.defaultDailyLimit);
-      if (elSpread) elSpread.innerText = cfg.rolloverEnabled ? `Distribusi defisit: ${cfg.spreadDays} hari` : `Rollover: Dinonaktifkan`;
+      if (elSpread) elSpread.innerText = cfg.rolloverEnabled ? `Distribusi defisit: ${cfg.spreadDays} hari (${engine.scope === 'operational' ? 'Belanja Harian' : 'Semua Pos'})` : `Rollover: Dinonaktifkan`;
 
       if (elEff) elEff.innerText = formatIDR(todayData.effectiveLimit);
       if (elDeduct) {
         elDeduct.innerText = todayData.deduction > 0
-          ? `Potongan defisit kemarin: -${formatIDR(todayData.deduction)}`
-          : `Tidak ada beban defisit kemarin`;
+          ? `Potongan defisit aktif: -${formatIDR(todayData.deduction)} (terbagi ${cfg.spreadDays} hari)`
+          : `Tidak ada beban potongan defisit`;
         elDeduct.className = todayData.deduction > 0 ? "text-[11px] text-rose-600 font-semibold mt-1" : "text-[11px] text-slate-500 mt-1";
       }
 
@@ -5303,8 +5378,8 @@
       if (elBadge) {
         if (todayData.balance < 0) {
           elBadge.className = "mt-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800";
-          elBadge.innerText = `Overspent (Defisit dibagi ${cfg.spreadDays} hari)`;
-        } else if (todayData.spent > todayData.effectiveLimit * 0.8) {
+          elBadge.innerText = `Overspent (Defisit dibagi ${cfg.spreadDays} hari ke depan)`;
+        } else if (todayData.spent > todayData.effectiveLimit * 0.8 && todayData.effectiveLimit > 0) {
           elBadge.className = "mt-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800";
           elBadge.innerText = `Waspada (Sisa kuota menipis)`;
         } else {
@@ -5326,7 +5401,7 @@
           { key: 'konsumsi', label: 'Konsumsi (Makan & Minum)', color: 'bg-emerald-500', textCol: 'text-emerald-700' },
           { key: 'jalanjalan', label: 'Jalan-Jalan / Gaya Hidup', color: 'bg-amber-500', textCol: 'text-amber-700' },
           { key: 'transport', label: 'Transportasi & BBM', color: 'bg-indigo-500', textCol: 'text-indigo-700' },
-          { key: 'lainnya', label: 'Kebutuhan Lainnya', color: 'bg-purple-500', textCol: 'text-purple-700' }
+          { key: 'lainnya', label: 'Kebutuhan Harian Lainnya', color: 'bg-purple-500', textCol: 'text-purple-700' }
         ];
 
         let catHtml = '';
@@ -5366,20 +5441,22 @@
           const isTodayRow = isCurrentMonth && row.day === currentDay;
           let statusBadge = '';
 
-          if (row.isOver) {
+          if (!row.isPastOrToday) {
+            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">Belum Berjalan</span>`;
+          } else if (row.isOver) {
             statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Defisit (-${formatIDR(Math.abs(row.balance))})</span>`;
           } else if (row.spent > row.effectiveLimit * 0.8 && row.effectiveLimit > 0) {
-            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Waspada</span>`;
+            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Waspada (>80%)</span>`;
           } else {
             statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Hemat / Aman</span>`;
           }
 
           tableHtml += `
-            <tr class="${isTodayRow ? 'bg-indigo-50/60 font-medium border-l-4 border-indigo-600' : 'hover:bg-slate-50/70'} transition">
+            <tr class="${isTodayRow ? 'bg-indigo-50/70 font-medium border-l-4 border-indigo-600' : 'hover:bg-slate-50/70'} transition">
               <td class="p-3.5 whitespace-nowrap">
                 <div class="flex items-center gap-2">
                   <span class="font-bold text-slate-800">${row.dayLabel}</span>
-                  ${isTodayRow ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-600 text-white uppercase">Hari Ini</span>' : ''}
+                  ${isTodayRow ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-600 text-white uppercase shadow-2xs">Hari Ini</span>' : ''}
                 </div>
               </td>
               <td class="p-3.5 whitespace-nowrap text-slate-600">${formatIDR(row.baseLimit)}</td>
@@ -5388,10 +5465,10 @@
               </td>
               <td class="p-3.5 whitespace-nowrap font-bold text-indigo-700">${formatIDR(row.effectiveLimit)}</td>
               <td class="p-3.5 whitespace-nowrap font-bold ${row.spent > 0 ? 'text-slate-900' : 'text-slate-400'}">
-                ${formatIDR(row.spent)}
+                ${row.isPastOrToday ? (row.spent > 0 ? formatIDR(row.spent) : 'Rp 0') : '<span class="text-slate-300 font-normal">-</span>'}
               </td>
-              <td class="p-3.5 whitespace-nowrap font-bold ${row.balance < 0 ? 'text-rose-600' : 'text-emerald-600'}">
-                ${row.balance < 0 ? `-${formatIDR(Math.abs(row.balance))}` : `+${formatIDR(row.balance)}`}
+              <td class="p-3.5 whitespace-nowrap font-bold ${!row.isPastOrToday ? 'text-slate-300 font-normal' : (row.balance < 0 ? 'text-rose-600' : 'text-emerald-600')}">
+                ${row.isPastOrToday ? (row.balance < 0 ? `-${formatIDR(Math.abs(row.balance))}` : `+${formatIDR(row.balance)}`) : '-'}
               </td>
               <td class="p-3.5 text-center whitespace-nowrap">${statusBadge}</td>
               <td class="p-3.5 text-center whitespace-nowrap">
@@ -5413,18 +5490,29 @@
 
     function showDailyTrxDetail(dateStr) {
       activeDetailDate = dateStr;
-      const list = (appData?.transactions || []).filter(t => t.tipe === 'OUT' && t.tanggal === dateStr);
-      const total = list.reduce((s, t) => s + (parseFloat(t.nominal) || 0), 0);
+      const allList = (appData?.transactions || []).filter(t => t.tipe === 'OUT' && t.tanggal === dateStr);
+      const scope = document.getElementById('daily-scope-select')?.value || 'operational';
+
+      const dailyList = allList.filter(t => isDailyOperationalCategory(t.kategori));
+      const excludedList = allList.filter(t => !isDailyOperationalCategory(t.kategori));
+
+      const totalDaily = dailyList.reduce((s, t) => s + (parseFloat(t.nominal) || 0), 0);
+      const totalExcluded = excludedList.reduce((s, t) => s + (parseFloat(t.nominal) || 0), 0);
 
       const dateLabel = document.getElementById('modal-daily-detail-date');
       const sumLabel = document.getElementById('modal-daily-detail-summary');
       const container = document.getElementById('modal-daily-detail-list');
 
       if (dateLabel) dateLabel.innerText = dateStr;
-      if (sumLabel) sumLabel.innerText = `Total Pengeluaran: ${formatIDR(total)} (${list.length} transaksi)`;
+      if (sumLabel) {
+        sumLabel.innerHTML = `
+          <span>Belanja Harian: <b class="text-indigo-700">${formatIDR(totalDaily)}</b></span>
+          ${totalExcluded > 0 ? ` &bull; <span>Komitmen Bulanan: <b class="text-slate-500">${formatIDR(totalExcluded)}</b></span>` : ''}
+        `;
+      }
 
       if (container) {
-        if (list.length === 0) {
+        if (allList.length === 0) {
           container.innerHTML = `
             <div class="p-6 text-center text-slate-400 text-xs italic bg-slate-50 rounded-xl">
               Belum ada transaksi pengeluaran yang dicatat pada tanggal ini.
@@ -5432,11 +5520,15 @@
           `;
         } else {
           let html = '';
-          list.forEach(t => {
+          allList.forEach(t => {
+            const isDaily = isDailyOperationalCategory(t.kategori);
             html += `
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-2">
+              <div class="p-3 ${isDaily ? 'bg-slate-50 border-slate-100' : 'bg-amber-50/40 border-amber-200/60'} rounded-xl border flex items-center justify-between gap-2">
                 <div class="space-y-0.5">
-                  <p class="font-bold text-slate-800 text-xs">${t.keterangan || '-'}</p>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <p class="font-bold text-slate-800 text-xs">${t.keterangan || '-'}</p>
+                    ${!isDaily ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800">Komitmen Bulanan</span>' : ''}
+                  </div>
                   <div class="flex items-center gap-2 text-[10px] text-slate-500">
                     <span class="px-2 py-0.5 bg-white border border-slate-200 rounded font-semibold">${t.kategori || 'Umum'}</span>
                     <span>&bull;</span>
